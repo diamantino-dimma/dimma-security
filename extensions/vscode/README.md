@@ -8,10 +8,11 @@ Cursor uses Open VSX for third-party extensions, so publish this same VSIX
 there if you want Cursor users to find it in the Extensions panel.
 
 The Python and Node.js packages both bundle this VSIX. After installing either,
-run `dimma styles` from the project directory. It installs the VSIX into each
-detected VS Code/Cursor CLI and sets the icon theme only in that workspace's
-`.vscode/settings.json`. It never runs as a package install hook. Refresh the
-bundled VSIX assets in both packages before publishing package updates.
+run `dimma styles`. It installs the VSIX into each detected VS Code, Cursor,
+and VSCodium CLI. It does not read or modify workspace settings, so your
+existing file icon theme remains active. The language association and syntax
+highlighting apply only to `.dimma` files. It never runs as a package install
+hook.
 
 ## Install from a VSIX
 
@@ -21,9 +22,10 @@ bundled VSIX assets in both packages before publishing package updates.
 3. Run **Preferences: File Icon Theme** and select **Dimma File Icons**.
 
 The extension contributes syntax highlighting independently of the selected
-icon theme. Selecting **Dimma File Icons** changes the active file icon theme;
-installing either package alone does not change editor settings. Run
-`dimma styles` explicitly to install and activate the bundled extension.
+icon theme. Selecting **Dimma File Icons** manually changes the active file
+icon theme for the editor. VS Code does not support layering file icon themes
+or applying them to only one extension, so `dimma styles` installs the
+language extension but does not select its icon theme.
 
 ## Package locally
 

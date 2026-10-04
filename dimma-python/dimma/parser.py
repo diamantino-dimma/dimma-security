@@ -14,16 +14,21 @@ from typing import Any, Dict, List
 
 
 DEFAULTS: Dict[str, Any] = {
+    "target": None,
+    "listen": 8080,
+    "files_protect": [],
     "auto_protect": False,
     "encrypt_traffic": None,
     "protect_input": [],
     "rate_limit": {"max": 100, "window_ms": 60000},
     "exclude": [],
     "connect": [],
+    "files_protect": [],
     "password_hashing": "bcrypt",
     "session_expiry_minutes": 30,
     "anomaly_detection": False,
     "ai_detection": False,
+    "ip_reputation_check": False,
     "ai_provider": "nvidia",
     "ai_model": None,
     "csrf_protection": True,
@@ -35,17 +40,22 @@ DEFAULTS: Dict[str, Any] = {
 }
 
 COMMAND_MAP = {
+    "target": "target",
+    "listen": "listen",
+    "files_protect": "files_protect",
     "auto_protect": "auto_protect",
     "encrypt traffic": "encrypt_traffic",
     "protect input": "protect_input",
     "rate_limit": "rate_limit",
     "exclude": "exclude",
     "connect": "connect",
+    "files_protect": "files_protect",
     "override rate_limit": "rate_limit",
     "password_hashing": "password_hashing",
     "session_expiry": "session_expiry_minutes",
     "anomaly_detection": "anomaly_detection",
     "ai_detection": "ai_detection",
+    "ip_reputation_check": "ip_reputation_check",
     "ai_provider": "ai_provider",
     "ai_model": "ai_model",
     "csrf_protection": "csrf_protection",
@@ -133,7 +143,7 @@ def parse_dimma(source: str) -> DimmaConfig:
                 existing = set(config.values.get(key, []))
                 new_items = value if isinstance(value, list) else [value]
                 config.values[key] = list(existing.union(new_items))
-            elif key in ("exclude", "connect"):
+            elif key in ("exclude", "connect", "files_protect"):
                 new_items = value if isinstance(value, list) else [value]
                 config.values[key] = config.values.get(key, []) + new_items
             else:

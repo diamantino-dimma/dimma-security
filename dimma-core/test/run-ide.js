@@ -35,47 +35,39 @@ function makeWorkspace(settings) {
   return workspace;
 }
 
-function readSettings(workspace) {
-  return JSON.parse(fs.readFileSync(path.join(workspace, '.vscode', 'settings.json'), 'utf8'));
-}
-
 console.log('\n== dimma styles ==');
 
-test('instala em todos os editores detetados sem shell e preserva outras definicoes', () => {
-  const workspace = makeWorkspace({ 'files.exclude': { build: true }, 'workbench.iconTheme': 'old-theme' });
+test('instala VS Code, Cursor e VSCodium sem alterar as definicoes do workspace', () => {
+  const workspace = makeWorkspace({ 'files.exclude': { build: true }, 'workbench.iconTheme': 'existing-theme' });
+  const settingsPath = path.join(workspace, '.vscode', 'settings.json');
+  const originalSettings = fs.readFileSync(settingsPath, 'utf8');
   const calls = [];
   installStyles({
     cwd: workspace,
-    findExecutable: (editor) => (editor === 'vscode' ? 'code' : 'cursor'),
+    findExecutable: (editor) => ({ vscode: 'code', cursor: 'cursor', vscodium: 'codium' }[editor]),
     spawnSync: (...args) => {
       calls.push(args);
       return { status: 0 };
     },
   });
-  assert.deepStrictEqual(readSettings(workspace), {
-    'files.exclude': { build: true },
-    'workbench.iconTheme': 'dimma-file-icons',
-  });
-  assert.strictEqual(calls.length, 2);
+  assert.strictEqual(fs.readFileSync(settingsPath, 'utf8'), originalSettings);
+  assert.strictEqual(calls.length, 3);
   assert.strictEqual(calls[0][1][0], '--install-extension');
   assert.strictEqual(calls[0][2].shell, false);
+  assert.strictEqual(calls[2][0], 'codium');
 });
 
-test('settings invalidos falham antes de executar o CLI', () => {
+test('nao le nem cria ficheiros de definicoes do workspace', () => {
   const workspace = makeWorkspace();
   const settingsPath = path.join(workspace, '.vscode', 'settings.json');
-  fs.writeFileSync(settingsPath, '{ // comment\n}', 'utf8');
-  let launched = false;
-  assert.throws(
-    () => installStyles({
-      cwd: workspace,
-      findExecutable: () => 'code',
-      spawnSync: () => { launched = true; return { status: 0 }; },
-    }),
-    /JSON valido/
-  );
-  assert.strictEqual(launched, false);
-  assert.strictEqual(fs.readFileSync(settingsPath, 'utf8'), '{ // comment\n}');
+  fs.rmdirSync(path.join(workspace, '.vscode'));
+  installStyles({
+    cwd: workspace,
+    findExecutable: () => 'code',
+    spawnSync: () => ({ status: 0 }),
+  });
+  assert.strictEqual(fs.existsSync(settingsPath), false);
+  assert.strictEqual(fs.existsSync(path.join(workspace, '.vscode')), false);
 });
 
 test('falha de instalacao nao altera settings existentes', () => {
@@ -88,7 +80,10 @@ test('falha de instalacao nao altera settings existentes', () => {
     }),
     /codigo 1/
   );
-  assert.deepStrictEqual(readSettings(workspace), { 'workbench.colorTheme': 'existing' });
+  assert.deepStrictEqual(
+    JSON.parse(fs.readFileSync(path.join(workspace, '.vscode', 'settings.json'), 'utf8')),
+    { 'workbench.colorTheme': 'existing' }
+  );
 });
 
 test('sem CLI de editor, reporta erro antes de alterar settings', () => {
@@ -103,7 +98,10 @@ test('sem CLI de editor, reporta erro antes de alterar settings', () => {
     /Nao encontrei o CLI/
   );
   assert.strictEqual(launched, false);
-  assert.deepStrictEqual(readSettings(workspace), { 'files.exclude': { build: true } });
+  assert.deepStrictEqual(
+    JSON.parse(fs.readFileSync(path.join(workspace, '.vscode', 'settings.json'), 'utf8')),
+    { 'files.exclude': { build: true } }
+  );
 });
 
 for (const workspace of workspaces) fs.rmSync(workspace, { recursive: true, force: true });

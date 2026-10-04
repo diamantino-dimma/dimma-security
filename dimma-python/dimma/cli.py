@@ -1,6 +1,7 @@
 """CLI do dimma: comando global `dimma init` para projetos Python."""
 import os
 import sys
+from pathlib import Path
 
 from .template import DEFAULT_TEMPLATE as TEMPLATE
 from .scan import scan_project, format_report
@@ -8,6 +9,7 @@ from .security.supply_chain import audit_supply_chain, format_supply_chain_repor
 from .security.pqc import check_pqc_readiness, format_pqc_report
 from .security.ai import PROVIDERS, classify_with_ai
 from .ide import install_styles
+from .injector import eject_all, inject_all
 
 
 def detect_stack(cwd: str) -> str:
@@ -98,6 +100,88 @@ def pqc_check() -> None:
     print(format_pqc_report(result))
 
 
+def inject(args=None) -> None:
+    args = args or []
+    dry_run = "--dry-run" in args
+    positional = [arg for arg in args if not arg.startswith("--")]
+    unsupported = [
+        arg for arg in args if arg.startswith("--") and arg != "--dry-run"
+    ]
+    if unsupported or len(positional) > 1:
+        details = unsupported or positional[1:]
+        print(f"[dimma] Opcao(s) nao suportada(s): {', '.join(details)}", file=sys.stderr)
+        print("Uso: dimma inject [security.dimma] [--dry-run]", file=sys.stderr)
+        sys.exit(2)
+
+    cwd = Path.cwd()
+    config_path = (cwd / (positional[0] if positional else "security.dimma")).resolve()
+    if not config_path.is_file():
+        print(f'[dimma] Ficheiro nao encontrado: "{config_path}". Execute "dimma init" primeiro.', file=sys.stderr)
+        sys.exit(1)
+
+    try:
+        from .parser import parse_dimma
+
+        config = parse_dimma(config_path.read_text(encoding="utf-8-sig"))
+    except (OSError, SyntaxError, UnicodeError) as error:
+        print(f"[dimma] Nao foi possivel ler o ficheiro .dimma: {error}", file=sys.stderr)
+        sys.exit(1)
+
+    files = config.get("files_protect", [])
+    if not isinstance(files, list) or not all(
+        isinstance(file_path, str) and file_path.strip() for file_path in files
+    ):
+        print("[dimma] @files_protect deve ser uma lista de caminhos de ficheiros.", file=sys.stderr)
+        sys.exit(1)
+    if not files:
+        print("[dimma] ERRO: @files_protect esta vazio.", file=sys.stderr)
+        print("Adicione ao security.dimma, por exemplo:", file=sys.stderr)
+        print("  @files_protect: [app.py]", file=sys.stderr)
+        sys.exit(1)
+
+    print("\n[dimma] A preparar injecao nos ficheiros de @files_protect...\n")
+    if dry_run:
+        print("  (modo dry-run - nenhum ficheiro sera alterado)\n")
+
+    results = inject_all(files, config_path, cwd=cwd, dry_run=dry_run)
+    injected = skipped = errors = 0
+    for result in results:
+        if result.get("error"):
+            print(f"  X ERRO      {result['file']}: {result['error']}")
+            errors += 1
+        elif not result["injected"]:
+            print(f"  - IGNORADO  {result['file']}: {result['reason']}")
+            skipped += 1
+        else:
+            suffix = " (dry-run)" if result.get("dry_run") else f" (backup: {result['backup']})"
+            print(f"  OK INJETADO {result['file']}{suffix}")
+            injected += 1
+
+    print(f"\n  {injected} injetado(s), {skipped} ignorado(s), {errors} erro(s)\n")
+    if errors:
+        sys.exit(1)
+
+
+def eject(args=None) -> None:
+    args = args or []
+    if not args or any(arg.startswith("--") for arg in args):
+        print("Uso: dimma eject <ficheiro.py> [mais_ficheiros.py ...]", file=sys.stderr)
+        sys.exit(2)
+
+    results = eject_all(args)
+    failures = 0
+    for result in results:
+        if result["ejected"]:
+            preserved = result.get("preserved_current_file")
+            detail = f" (versao atual preservada em {preserved})" if preserved else ""
+            print(f"  OK REMOVIDO {result['file']} ({result['method']}){detail}")
+        else:
+            print(f"  X ERRO {result['file']}: {result['error']}")
+            failures += 1
+    if failures:
+        sys.exit(1)
+
+
 def ai_check(args=None) -> None:
     args = args or []
     unsupported = [arg for arg in args if arg != "--test"]
@@ -173,6 +257,10 @@ def main() -> None:
 
     if command == "init":
         init()
+    elif command == "inject":
+        inject(args[1:])
+    elif command == "eject":
+        eject(args[1:])
     elif command == "scan":
         scan(args[1:])
     elif command == "pqc-check":
@@ -188,11 +276,14 @@ def main() -> None:
     else:
         print("Uso:")
         print("  dimma init        Cria um security.dimma na pasta atual e detecta a stack do projeto.")
+        print("  dimma inject      Injeta protecoes Flask nos ficheiros de @files_protect (--dry-run simula).")
+        print("    Uso: dimma inject [security.dimma] [--dry-run]")
+        print("  dimma eject       Remove injecao Dimma e restaura o backup, se disponivel.")
         print("  dimma scan        Varre o codigo (padroes inseguros + supply_chain_guard).")
         print("    --supply-chain-online  tambem verifica pacotes recem-publicados no PyPI (rede)")
         print("  dimma pqc-check   Verifica se o runtime suporta troca de chaves TLS pos-quantica.")
         print("  dimma ai-check    Verifica a configuracao de IA (--test faz chamada externa).")
-        print("  dimma styles      Instala a extensao e ativa o tema no projeto (VS Code/Cursor).")
+        print("  dimma styles      Instala realce .dimma em VS Code, Cursor ou VSCodium sem alterar settings.")
 
 
 if __name__ == "__main__":

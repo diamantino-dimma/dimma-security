@@ -1,12 +1,12 @@
 """Optional provider-backed AI review for anomaly signals, not request bodies."""
 import json
 import os
-import threading
 import urllib.error
 import urllib.parse
 import urllib.request
-from datetime import datetime, timezone
 from typing import Any, Dict, Optional, Tuple
+
+from .budget import consume_daily_budget
 
 DEFAULT_DAILY_BUDGET = 200
 DEFAULT_TIMEOUT_SECONDS = 5.0
@@ -61,24 +61,11 @@ PROVIDERS = {
     },
 }
 
-_budget_lock = threading.Lock()
-_budget_counts: Dict[Tuple[str, str], int] = {}
-
-
 def _consume_daily_budget(provider: str, limit: int) -> bool:
-    if not isinstance(limit, int) or isinstance(limit, bool) or limit < 0:
-        raise ValueError("dimma-ai: daily_budget deve ser um inteiro nao negativo.")
-    today = datetime.now(timezone.utc).date().isoformat()
-    key = (provider, today)
-    with _budget_lock:
-        for old_key in list(_budget_counts):
-            if old_key[1] != today:
-                del _budget_counts[old_key]
-        count = _budget_counts.get(key, 0)
-        if count >= limit:
-            return False
-        _budget_counts[key] = count + 1
-        return True
+    try:
+        return bool(consume_daily_budget(f"ai:{provider}", limit)["allowed"])
+    except ValueError as error:
+        raise ValueError(f"dimma-ai: {error}") from None
 
 
 def _provider_request(

@@ -29,11 +29,13 @@ app.get('/health', (_req, res) => res.json({ ok: true }));
 For CLI setup and configuration, see the
 [project README](https://github.com/diamantino-dimma/dimma-security#readme).
 
-Run `npm exec -- dimma styles` from the project directory to install the
-bundled extension in every detected VS Code/Cursor installation and activate its icon theme in
-`.vscode/settings.json`. The explicit command preserves other valid JSON
-settings, does not change global editor configuration, and stops if settings
-contain JSONC comments. `npm install` itself does not modify the IDE.
+Run `npm exec -- dimma styles` to install the bundled `.dimma` language
+extension in detected VS Code, Cursor, and VSCodium installations. It does not
+read or modify workspace settings, and preserves the currently selected file
+icon theme. Syntax highlighting applies only to `.dimma` files. The Dimma icon
+theme remains an optional manual selection in the editor; selecting any file
+icon theme replaces the currently active one. `npm install` itself does not
+modify the IDE.
 
 `dimma scan` is a heuristic static scanner, not an active DAST/pentest
 scanner or a security certification.

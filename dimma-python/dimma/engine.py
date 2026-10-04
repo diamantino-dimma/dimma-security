@@ -18,11 +18,39 @@ from werkzeug.exceptions import RequestEntityTooLarge
 
 from .parser import parse_dimma
 from .security.sanitize import scan_object
-from .security.anomaly import AnomalyDetector
+from .security.anomaly import AnomalyDetector, RedisAnomalyDetector
 from .security.ai import classify_with_ai
+from .security.reputation import (
+    DEFAULT_BLOCK_THRESHOLD,
+    check_ip_reputation,
+)
 from .security import auth as auth_utils
 from .security.webauthn import WebAuthnSupport
 from .template import DEFAULT_TEMPLATE
+
+
+def _create_anomaly_detector():
+    redis_url = os.environ.get("REDIS_URL")
+    if not redis_url:
+        return AnomalyDetector()
+    try:
+        import redis
+    except ImportError:
+        warnings.warn(
+            "[dimma] REDIS_URL esta configurada, mas o extra dimma[redis] nao esta "
+            "instalado — deteccao de anomalias limitada a este processo.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        return AnomalyDetector()
+
+    client = redis.from_url(
+        redis_url,
+        socket_connect_timeout=1,
+        socket_timeout=1,
+        decode_responses=True,
+    )
+    return RedisAnomalyDetector(client)
 
 
 class DimmaEngine:
@@ -44,7 +72,7 @@ class DimmaEngine:
             source = f.read()
         self.config = parse_dimma(source)
         self.file_path = dimma_file_path
-        self._anomaly_detector = AnomalyDetector()
+        self._anomaly_detector = _create_anomaly_detector()
         self.csrf = None
 
         # Passkeys/WebAuthn: inicializado sob demanda (lazy) so quando
@@ -198,6 +226,32 @@ class DimmaEngine:
                 g.dimma_anomaly = result
                 if result["anomalous"]:
                     app.logger.warning(f"[dimma] anomalia detectada em {key}: {result}")
+                    if cfg.get("ip_reputation_check"):
+                        try:
+                            reputation = check_ip_reputation(key)
+                            g.dimma_reputation = reputation
+                            if (
+                                reputation["checked"]
+                                and not reputation["isWhitelisted"]
+                                and reputation["abuseConfidenceScore"] >= DEFAULT_BLOCK_THRESHOLD
+                            ):
+                                app.logger.warning(
+                                    "[dimma-reputation] pedido bloqueado por reputacao de IP (score=%s)",
+                                    reputation["abuseConfidenceScore"],
+                                )
+                                return jsonify({
+                                    "error": (
+                                        "Requisicao bloqueada pelo .dimma: "
+                                        "IP com historico de abuso conhecido (AbuseIPDB)."
+                                    ),
+                                    "abuseConfidenceScore": reputation["abuseConfidenceScore"],
+                                    "totalReports": reputation["totalReports"],
+                                }), 403
+                        except (RuntimeError, ValueError, OSError) as error:
+                            app.logger.warning(
+                                "[dimma-reputation] consulta indisponivel; mantendo a decisao local: %s",
+                                type(error).__name__,
+                            )
                     if ai_on:
                         try:
                             verdict = classify_with_ai(

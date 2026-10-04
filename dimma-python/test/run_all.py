@@ -8,6 +8,8 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TEST_SCRIPTS = (
     "run_tests.py",
     "run_scan_tests.py",
+    "run_inject_tests.py",
+    "run_security_parity_tests.py",
     "run_ide_tests.py",
     "run_webauthn_tests.py",
     "run_ai_tests.py",

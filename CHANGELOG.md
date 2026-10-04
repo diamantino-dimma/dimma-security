@@ -4,6 +4,44 @@ Este arquivo regista a evolução do projeto a cada sessão de trabalho e indica
 as validações efetivamente executadas; código não testado é identificado como
 tal.
 
+## Correção — `dimma styles` preserva o tema de ícones
+
+- O comando instala a extensão de linguagem, mas já não lê nem altera
+  `.vscode/settings.json` nem seleciona automaticamente o tema de ícones
+  Dimma. O tema anteriormente ativo permanece selecionado.
+- O realce de sintaxe e a associação de linguagem aplicam-se aos ficheiros
+  `.dimma`. Selecionar manualmente **Dimma File Icons** continua a substituir
+  o tema de ícones ativo, uma limitação do VS Code.
+- A descrição de 2026-10-04 abaixo regista o comportamento anterior e não
+  representa o comportamento atual.
+
+## Python — suporte a `dimma inject`
+
+- O CLI Python agora aceita `dimma inject [security.dimma] [--dry-run]` e
+  usa `@files_protect` para selecionar os módulos Flask.
+- `--dry-run` apenas analisa e mostra os alvos; a injeção real cria um backup
+  exclusivo `.dimma.bak`, recusa caminhos fora do projeto e falha de forma
+  conservadora quando não identifica exatamente uma aplicação Flask no
+  módulo.
+- Incluídos testes do parser, da simulação, da escrita e da invocação do CLI.
+- `dimma eject <ficheiro.py>` restaura o backup apenas quando existe marcador
+  de injeção e preserva a versão atual em `.dimma.eject.bak`.
+
+## Python — reputação de IP e orçamento Redis
+
+- Implementada a proteção `@ip_reputation_check` que já era declarada no
+  template Python: só consulta AbuseIPDB após anomalia local, ignora IPs não
+  globais, valida e limita a resposta externa e bloqueia a partir de score 75.
+- Orçamentos diários de IA e AbuseIPDB passam a partilhar uma contagem atómica
+  via Redis quando `REDIS_URL` e `dimma[redis]` estão configurados. Sem URL,
+  o budget é local; se Redis configurado falhar, lookups externos são
+  suspensos e a falha é reportada.
+- O histórico estatístico de anomalias também pode ser partilhado via Redis
+  para que múltiplos workers aprendam do tráfego em conjunto; falha de Redis
+  é reportada e não autoriza os lookups externos de IA/reputação.
+- Testes cobrem IPs privados/mapeados, orçamento, validação de resposta e
+  bloqueio após anomalia.
+
 ## Relatórios do comando `dimma scan`
 
 - Os achados e a auditoria de dependências são apresentados em secções

@@ -41,9 +41,9 @@ Os metadados locais já apontam para o repositório público e identificam
   ou os segredos protegidos dos marketplaces; nunca grave tokens no código,
   nos ficheiros `.dimma`, em comandos versionados ou no histórico do terminal.
 
-O pacote Python já está publicado; os passos dele abaixo ficam como referência
-para releases futuros. A publicação da extensão VS Code/Cursor ou do plugin
-JetBrains é separada e fica fora do objetivo atual.
+O pacote Python está publicado (`1.0.1`); os passos abaixo ficam como
+referência para releases futuros. A publicação da extensão VS Code/Cursor ou
+do plugin JetBrains é separada e fica fora do objetivo atual.
 
 ## 1. Antes de criar uma versão
 
@@ -123,9 +123,10 @@ explícita.
 
 ## 4. PyPI — já publicado
 
-O pacote `dimma==1.0.0` já está publicado: [PyPI](https://pypi.org/project/dimma/).
-Foi instalado num ambiente virtual temporário limpo e o comando `dimma --help`
-foi verificado. A instalação para utilizadores é:
+As versões `dimma==1.0.0` e `dimma==1.0.1` estão publicadas:
+[PyPI](https://pypi.org/project/dimma/). A versão `1.0.1` inclui o comando
+`dimma styles`. Foi instalada num ambiente virtual temporário limpo e o
+comando `dimma --help` foi verificado. A instalação para utilizadores é:
 
 ```powershell
 python -m pip install dimma
@@ -201,8 +202,11 @@ PyPI ao workflow nem ao repositório. Para detalhes oficiais, consulta
    npx --yes @vscode/vsce package
    ```
 
-3. Instale o `.vsix` localmente no VS Code, selecione **Dimma File Icons** e
-   confirme tanto `security.dimma` como outros ficheiros `*.dimma`.
+3. Instale o `.vsix` localmente no VS Code e confirme o realce em
+   `security.dimma` e noutros ficheiros `*.dimma`. O comando `dimma styles`
+   instala a extensão, mas não altera `settings.json` nem seleciona o tema de
+   ícones. Selecionar **Dimma File Icons** manualmente substitui o tema de
+   ícones ativo no editor.
 4. Para listar no Marketplace, autentique `vsce` usando o publisher correto
    e publique só depois da validação:
 
@@ -210,9 +214,10 @@ PyPI ao workflow nem ao repositório. Para detalhes oficiais, consulta
    npx --yes @vscode/vsce publish
    ```
 
-O tema autónomo substitui o tema de ícones ativo. Para continuar a usar
-Material Icon Theme, configure a associação personalizada nas definições do
-utilizador conforme descrito no README principal.
+O tema de ícones Dimma é opcional e, se selecionado manualmente, substitui o
+tema ativo. `dimma styles` não faz essa seleção; assim, preserva o tema
+existente. O VS Code não suporta sobrepor temas de ícones nem aplicá-los só a
+uma extensão de ficheiro.
 
 ### Publicar para Cursor (Open VSX)
 

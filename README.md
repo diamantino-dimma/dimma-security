@@ -73,11 +73,13 @@ listas, e mostram o escudo em `security.dimma`. As cores seguem o tema de
 sintaxe ativo no editor.
 
 No VS Code, instala a extensão pela paleta **Extensions: Install from VSIX...**.
-O realce de sintaxe funciona automaticamente; para mostrar também o escudo,
-seleciona **Dimma File Icons and Syntax** em **Preferences: File Icon Theme**.
-A mesma extensão pode ser distribuída no Open VSX para ser instalada no Cursor.
-Selecionar este tema autónomo substitui o tema de ícones atualmente ativo, não
-o tema de cores de sintaxe.
+O realce de sintaxe funciona automaticamente apenas nos ficheiros `.dimma`.
+`dimma styles` instala a extensão sem alterar o tema de ícones selecionado nem
+as definições do workspace. O ícone Dimma é opcional: selecionar
+**Dimma File Icons and Syntax** em **Preferences: File Icon Theme** substitui
+o tema de ícones ativo no editor, porque o VS Code não permite sobrepor temas
+de ícones por extensão de ficheiro. A mesma extensão pode ser distribuída no
+Open VSX para instalação no Cursor e VSCodium.
 
 Para manter **Material Icon Theme**, copie o SVG para uma pasta `icons`
 dentro de `%USERPROFILE%\.vscode\extensions\` (por exemplo,
@@ -93,12 +95,11 @@ dentro de `%USERPROFILE%\.vscode\extensions\` (por exemplo,
 Depois execute **Material Icons: Reset** ou reative o tema. Essa associação
 altera apenas o ícone: o realce de sintaxe ainda requer a extensão Dimma.
 Instalar `npm install dimma` ou `pip install dimma` não altera o IDE
-automaticamente. Como opção explícita, execute `dimma styles` na pasta do
-projeto. O comando instala o VSIX incluído nos pacotes nos CLIs de VS Code e/ou
-Cursor encontrados no `PATH` e define `workbench.iconTheme` apenas em
-`.vscode/settings.json` desse projeto, preservando outras definições JSON
-válidas. Não executa hooks durante a instalação npm/PyPI, não altera definições
-globais e recusa ficheiros com comentários JSONC.
+automaticamente. Como opção explícita, execute `dimma styles`. O comando
+instala o VSIX incluído nos pacotes nos CLIs de VS Code, Cursor e VSCodium
+encontrados no `PATH`. Não lê nem altera `settings.json`, não troca o tema de
+ícones ativo, não modifica ficheiros do projeto e não executa hooks durante a
+instalação npm/PyPI. O realce de sintaxe aplica-se apenas a ficheiros `.dimma`.
 Para IntelliJ IDEA e outros IDEs baseados na plataforma JetBrains, existe uma
 integração de tipo de ficheiro em [`extensions/jetbrains/`](./extensions/jetbrains/);
 construa e instale o plugin ZIP indicado no respetivo README. O Visual Studio
@@ -130,8 +131,7 @@ npm install dimma express
 npm exec -- dimma styles
 ```
 
-The published PyPI version 1.0.0 does not include this new command yet; it will
-be available after the prepared 1.0.1 release is published.
+The published PyPI version 1.0.1 includes `dimma styles`.
 
 The Node.js package will use the npm name `dimma`; it is not published yet.
 The production audit keeps the `high` threshold and excludes only the
@@ -217,6 +217,20 @@ app = Flask(__name__)
 dimma = DimmaEngine("./security.dimma")
 dimma.protect(app)
 ```
+
+To check that the injector recognizes a module-level Flask app listed in
+`@files_protect` without changing it, run:
+
+```bash
+dimma inject --dry-run
+dimma inject
+```
+
+The dry run does not modify files. A real injection is limited to `.py` files
+inside the project, requires exactly one recognizable module-level Flask app,
+and creates an exclusive `.dimma.bak` backup before writing. To revert,
+`dimma eject app.py` restores that backup only if the injection marker remains;
+it preserves the current version as `.dimma.eject.bak`.
 
 Instalar também as dependências de teste e executar a suite Python completa:
 ```bash

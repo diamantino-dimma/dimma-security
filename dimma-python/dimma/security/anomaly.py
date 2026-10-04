@@ -4,10 +4,51 @@ z-score), por chave (IP). Mesma abordagem do core Node.js: um modelo
 estatistico honesto, leve, que aprende o padrao de trafego normal de
 cada IP e sinaliza rajadas fora do comum.
 """
+import logging
+import math
 import statistics
+import threading
 import time
 from collections import deque
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
+
+try:
+    from redis.exceptions import RedisError
+except ImportError:
+    _REDIS_ERRORS = ()
+else:
+    _REDIS_ERRORS = (RedisError,)
+
+
+_logger = logging.getLogger("dimma.anomaly")
+_REDIS_ANOMALY_SCRIPT = (
+    'redis.call("RPUSH", KEYS[1], ARGV[1])\n'
+    'redis.call("LTRIM", KEYS[1], -tonumber(ARGV[2]), -1)\n'
+    'redis.call("EXPIRE", KEYS[1], tonumber(ARGV[3]))\n'
+    'return redis.call("LRANGE", KEYS[1], 0, -1)'
+)
+
+
+def compute_anomaly_from_timestamps(timestamps, z_score_threshold: float = 3.0) -> dict:
+    if len(timestamps) < 10:
+        return {"anomalous": False, "score": 0, "reason": "dados insuficientes"}
+
+    intervals = [
+        timestamps[index] - timestamps[index - 1]
+        for index in range(1, len(timestamps))
+    ]
+    mean = statistics.fmean(intervals)
+    standard_deviation = statistics.pstdev(intervals) or 1.0
+    last_interval = intervals[-1]
+    z_score = abs((last_interval - mean) / standard_deviation)
+    bursty = last_interval < mean - z_score_threshold * standard_deviation
+
+    return {
+        "anomalous": bool(z_score > z_score_threshold and bursty),
+        "score": round(z_score, 2),
+        "mean_interval_ms": round(mean),
+        "last_interval_ms": round(last_interval),
+    }
 
 
 class AnomalyDetector:
@@ -39,6 +80,7 @@ class AnomalyDetector:
         self._history: Dict[str, deque] = {}
         self._last_seen: Dict[str, float] = {}
         self._call_count = 0
+        self._lock = threading.RLock()
 
     def _bucket(self, key: str) -> deque:
         if key not in self._history:
@@ -65,38 +107,95 @@ class AnomalyDetector:
             self._last_seen.pop(key, None)
 
     def observe(self, key: str, timestamp: Optional[float] = None) -> dict:
-        timestamp = timestamp if timestamp is not None else time.time() * 1000
-        now_seconds = timestamp / 1000.0
+        observed_at = timestamp if timestamp is not None else time.time() * 1000
+        now_seconds = observed_at / 1000.0
 
-        self._call_count += 1
-        if self._call_count % self.sweep_every_n_calls == 0:
-            self._sweep_idle(now_seconds)
+        with self._lock:
+            self._call_count += 1
+            if self._call_count % self.sweep_every_n_calls == 0:
+                self._sweep_idle(now_seconds)
 
-        bucket = self._bucket(key)
-        bucket.append(timestamp)
-        self._last_seen[key] = now_seconds
+            bucket = self._bucket(key)
+            bucket.append(observed_at)
+            self._last_seen[key] = now_seconds
 
-        self._evict_oldest_if_over_capacity()
+            self._evict_oldest_if_over_capacity()
 
-        if len(bucket) < 10:
-            return {"anomalous": False, "score": 0, "reason": "dados insuficientes"}
+            return compute_anomaly_from_timestamps(
+                list(bucket),
+                z_score_threshold=self.z_score_threshold,
+            )
 
-        timestamps = list(bucket)
-        intervals = [timestamps[i] - timestamps[i - 1] for i in range(1, len(timestamps))]
+    def reset(self, key: str) -> None:
+        with self._lock:
+            self._history.pop(key, None)
+            self._last_seen.pop(key, None)
 
-        mean = statistics.fmean(intervals)
-        std = statistics.pstdev(intervals) or 1.0
-        last_interval = intervals[-1]
-        z_score = abs((last_interval - mean) / std)
-        bursty = last_interval < mean - self.z_score_threshold * std
 
+class RedisAnomalyDetector:
+    """Share bounded per-client anomaly history between application workers."""
+
+    def __init__(
+        self,
+        redis_client: Any,
+        window_size: int = 200,
+        z_score_threshold: float = 3.0,
+        idle_expiry_seconds: int = 3600,
+    ):
+        if not 10 <= window_size <= 10_000:
+            raise ValueError("window_size deve estar entre 10 e 10000.")
+        self.redis_client = redis_client
+        self.window_size = window_size
+        self.z_score_threshold = z_score_threshold
+        self.idle_expiry_seconds = idle_expiry_seconds
+        self._warned_unavailable = False
+
+    def observe(self, key: str, timestamp: Optional[float] = None) -> dict:
+        observed_at = timestamp if timestamp is not None else time.time() * 1000
+        redis_key = f"dimma:anomaly:{key}"
+        try:
+            raw_timestamps = self.redis_client.eval(
+                _REDIS_ANOMALY_SCRIPT,
+                1,
+                redis_key,
+                str(observed_at),
+                self.window_size,
+                self.idle_expiry_seconds,
+            )
+            if not isinstance(raw_timestamps, (list, tuple)) or len(raw_timestamps) > self.window_size:
+                raise ValueError("invalid Redis anomaly history")
+            timestamps = [float(value) for value in raw_timestamps]
+            if any(not math.isfinite(value) for value in timestamps):
+                raise ValueError("invalid Redis anomaly timestamp")
+            if any(
+                timestamps[index] > timestamps[index + 1]
+                for index in range(len(timestamps) - 1)
+            ):
+                raise ValueError("unordered Redis anomaly history")
+        except (OSError, TypeError, ValueError) + _REDIS_ERRORS as error:
+            return self._unavailable(error)
+
+        return compute_anomaly_from_timestamps(
+            timestamps,
+            z_score_threshold=self.z_score_threshold,
+        )
+
+    def _unavailable(self, error: Exception) -> dict:
+        if not self._warned_unavailable:
+            self._warned_unavailable = True
+            _logger.warning(
+                "Redis indisponivel para deteccao distribuida de anomalias; "
+                "camadas de reputacao e IA nao serao acionadas: %s",
+                type(error).__name__,
+            )
         return {
-            "anomalous": bool(z_score > self.z_score_threshold and bursty),
-            "score": round(z_score, 2),
-            "mean_interval_ms": round(mean),
-            "last_interval_ms": round(last_interval),
+            "anomalous": False,
+            "score": 0,
+            "reason": "redis indisponivel",
         }
 
     def reset(self, key: str) -> None:
-        self._history.pop(key, None)
-        self._last_seen.pop(key, None)
+        try:
+            self.redis_client.delete(f"dimma:anomaly:{key}")
+        except (OSError,) + _REDIS_ERRORS as error:
+            self._unavailable(error)
