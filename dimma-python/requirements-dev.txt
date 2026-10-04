@@ -3,4 +3,3 @@
 -r requirements.txt
 redis>=5.0.0
 fakeredis>=2.38.0
-lupa>=2.8

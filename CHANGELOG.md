@@ -21,6 +21,11 @@ tal.
   mínima Python declarada e a mesma API usada pelo Dimma.
 - Corrigido também o requisito de Flask-WTF para `>=1.2.2`; o CI mostrou que
   `1.3.0` não está publicado no PyPI e impedia a instalação das dependências.
+- Para Python 3.9, o pacote usa py_webauthn 2.x; confirmei que essa versão
+  fornece os símbolos e gera as opções de registo/autenticação usados pelo
+  wrapper. Python 3.10+ continua a usar py_webauthn 3.x.
+- Removida `lupa` das dependências de teste: não é usada pelo código nem
+  pelas suites e as versões recentes não suportam Python 3.9.
 
 ## 2026-10-04 — Comando único `dimma styles` e nome npm
 
