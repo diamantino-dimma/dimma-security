@@ -24,8 +24,9 @@ tal.
 - Para Python 3.9, o pacote usa py_webauthn 2.x; confirmei que essa versão
   fornece os símbolos e gera as opções de registo/autenticação usados pelo
   wrapper. Python 3.10+ continua a usar py_webauthn 3.x.
-- Removida `lupa` das dependências de teste: não é usada pelo código nem
-  pelas suites e as versões recentes não suportam Python 3.9.
+- Mantida `lupa` nas dependências de teste: o `fakeredis` precisa do extra Lua
+  para simular o script Redis usado nos testes de rate limiting. A versão 2.8
+  declara suporte a Python 3.8 ou superior.
 
 ## 2026-10-04 — Comando único `dimma styles` e nome npm
 
