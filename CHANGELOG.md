@@ -19,6 +19,8 @@ tal.
   Python 3.9. O pacote e as dependências de teste agora selecionam Flask-Limiter
   3.x para Python 3.9 e 4.x para Python 3.10 ou superior, mantendo a versão
   mínima Python declarada e a mesma API usada pelo Dimma.
+- Corrigido também o requisito de Flask-WTF para `>=1.2.2`; o CI mostrou que
+  `1.3.0` não está publicado no PyPI e impedia a instalação das dependências.
 
 ## 2026-10-04 — Comando único `dimma styles` e nome npm
 
