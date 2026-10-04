@@ -19,6 +19,7 @@ internet sem o programador pedir explicitamente
 import json
 import os
 import re
+import sys
 import urllib.error
 import urllib.request
 from datetime import datetime, timezone
@@ -218,32 +219,64 @@ def audit_supply_chain(root_dir: str, check_online: bool = False, max_age_days: 
 
 
 SEVERITY_LABEL = {"critical": "CRITICO", "high": "ALTO", "medium": "MEDIO", "low": "BAIXO"}
+SEVERITY_COLOR = {"critical": 31, "high": 91, "medium": 33, "low": 36}
+SEVERITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
 
 
-def format_supply_chain_report(result: Dict[str, Any]) -> str:
-    lines = ["\ndimma supply_chain_guard — auditoria de dependencias\n"]
+def format_supply_chain_report(result: Dict[str, Any], color: Optional[bool] = None) -> str:
+    if color is None:
+        color = (
+            "NO_COLOR" not in os.environ
+            and (
+                (os.environ.get("FORCE_COLOR") and os.environ["FORCE_COLOR"] != "0")
+                or sys.stdout.isatty()
+            )
+        )
+
+    def format_severity(severity: str) -> str:
+        label = SEVERITY_LABEL.get(severity, str(severity).upper())
+        ansi_color = SEVERITY_COLOR.get(severity)
+        return f"\033[{ansi_color};1m{label}\033[0m" if color and ansi_color else label
+
+    lines = ["## Supply chain guard", ""]
 
     if result.get("skipped"):
-        lines.append(f"Pulado: {result['reason']}")
+        lines.extend(["- **Estado:** pulado", f"- **Motivo:** {result['reason']}"])
         return "\n".join(lines)
 
-    lines.append(f"{result['dependencies_checked']} dependencia(s) verificada(s).")
+    lines.append(f"- **Dependencias verificadas:** {result['dependencies_checked']}")
     lines.append(
-        "Verificacao de idade de publicacao: ATIVA (consulta ao PyPI)."
+        "- **Verificacao de idade de publicacao:** "
+        + (
+            "ativa (consulta ao PyPI)"
         if result.get("online_check_performed")
-        else "Verificacao de idade de publicacao: DESATIVADA (use --supply-chain-online para ativar)."
+            else "desativada (use --supply-chain-online para ativar)"
+        )
     )
-    lines.append("")
 
     findings = result["findings"]
+    counts = {}
+    for finding in findings:
+        counts[finding["severity"]] = counts.get(finding["severity"], 0) + 1
+    lines.append(
+        "- **Severidades:** " + " | ".join(
+            f"{format_severity(severity)} {counts.get(severity, 0)}"
+            for severity in ("critical", "high", "medium", "low")
+        )
+    )
     if not findings:
-        lines.append("Nenhum problema de supply chain encontrado. \u2705")
+        lines.extend(["", "Nenhum problema de supply chain encontrado. \u2705"])
         return "\n".join(lines)
 
-    for f in findings:
-        pkg = f" [{f['package']}]" if f.get("package") else ""
-        lines.append(f"[{SEVERITY_LABEL.get(f['severity'], f['severity'].upper())}]{pkg} ({f['type']})")
-        lines.append(f"  {f['message']}")
-        lines.append("")
+    lines.extend(["", "### Achados"])
+    for f in sorted(findings, key=lambda finding: SEVERITY_ORDER[finding["severity"]]):
+        pkg = f" — {f['package']}" if f.get("package") else ""
+        lines.extend([
+            "",
+            f"#### [{format_severity(f['severity'])}]{pkg}",
+            "",
+            f"- **Regra:** `{f['type']}`",
+            f"- **Descricao:** {f['message']}",
+        ])
 
     return "\n".join(lines)

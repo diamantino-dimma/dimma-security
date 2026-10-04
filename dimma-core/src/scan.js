@@ -229,48 +229,71 @@ function scanProject(rootDir) {
 
 const SEVERITY_ORDER = { critical: 0, high: 1, medium: 2, low: 3 };
 const SEVERITY_LABEL = { critical: 'CRITICO', high: 'ALTO', medium: 'MEDIO', low: 'BAIXO' };
+const SEVERITY_COLOR = { critical: 31, high: 91, medium: 33, low: 36 };
 
-/** Formata os achados como um relatorio de texto legivel no terminal. */
-function formatReport({ findings, filesScanned, errors = [] }) {
-  const lines = [];
-  lines.push(`\ndimma scan — ${filesScanned} arquivo(s) analisado(s)\n`);
+function colorEnabled(requested) {
+  if (requested !== undefined) return requested;
+  if (Object.prototype.hasOwnProperty.call(process.env, 'NO_COLOR')) return false;
+  if (process.env.FORCE_COLOR && process.env.FORCE_COLOR !== '0') return true;
+  return Boolean(process.stdout.isTTY);
+}
+
+function formatSeverity(severity, color) {
+  const label = SEVERITY_LABEL[severity] || String(severity).toUpperCase();
+  const ansiColor = SEVERITY_COLOR[severity];
+  return color && ansiColor ? `\u001b[${ansiColor};1m${label}\u001b[0m` : label;
+}
+
+/** Formata os achados num relatorio Markdown legivel no terminal. */
+function formatReport({ findings, filesScanned, errors = [] }, options = {}) {
+  const color = colorEnabled(options.color);
+  const counts = findings.reduce((acc, finding) => {
+    acc[finding.severity] = (acc[finding.severity] || 0) + 1;
+    return acc;
+  }, {});
+  const lines = [
+    '# Dimma Scan',
+    '',
+    `- **Ficheiros analisados:** ${filesScanned}`,
+    `- **Total de achados:** ${findings.length}`,
+    `- **Severidades:** ${['critical', 'high', 'medium', 'low']
+      .map((severity) => `${formatSeverity(severity, color)} ${counts[severity] || 0}`)
+      .join(' | ')}`,
+  ];
 
   if (errors.length > 0) {
-    lines.push(`Cobertura incompleta: ${errors.length} erro(s) ao ler ficheiros/diretorios.`);
+    lines.push('', '## Cobertura incompleta', '', `${errors.length} erro(s) ao ler ficheiros/diretorios:`);
     for (const error of errors) {
-      lines.push(`[ERRO] ${error.path}: ${error.message}`);
+      lines.push(`- **${error.path}:** ${error.message}`);
     }
-    lines.push('');
   }
 
   if (findings.length === 0) {
-    lines.push(errors.length > 0
-      ? 'Nenhum padrao encontrado nos ficheiros que puderam ser lidos; o scan esta incompleto.'
-      : 'Nenhum padrao inseguro conhecido foi encontrado. \u2705');
-    lines.push('(Lembrete: isto e uma analise estatica leve, nao substitui revisao de codigo nem prepared statements.)');
+    lines.push(
+      '',
+      '## Resultado',
+      '',
+      errors.length > 0
+        ? 'Nenhum padrao encontrado nos ficheiros que puderam ser lidos; o scan esta incompleto.'
+        : 'Nenhum padrao inseguro conhecido foi encontrado. \u2705',
+      '',
+      '> Analise estatica por padroes; nao substitui revisao de codigo nem prepared statements.'
+    );
     return lines.join('\n');
   }
 
   const sorted = [...findings].sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]);
-  const counts = findings.reduce((acc, f) => {
-    acc[f.severity] = (acc[f.severity] || 0) + 1;
-    return acc;
-  }, {});
-
-  lines.push(
-    `Encontrados ${findings.length} problema(s): ` +
-      Object.entries(counts)
-        .sort((a, b) => SEVERITY_ORDER[a[0]] - SEVERITY_ORDER[b[0]])
-        .map(([sev, count]) => `${count} ${SEVERITY_LABEL[sev]}`)
-        .join(', ')
-  );
-  lines.push('');
+  lines.push('', '## Achados');
 
   for (const f of sorted) {
-    lines.push(`[${SEVERITY_LABEL[f.severity]}] ${f.file}:${f.line} (${f.ruleId})`);
-    lines.push(`  ${f.message}`);
-    lines.push(`  > ${f.snippet}`);
-    lines.push('');
+    lines.push(
+      '',
+      `### [${formatSeverity(f.severity, color)}] ${f.file}:${f.line}`,
+      '',
+      `- **Regra:** \`${f.ruleId}\``,
+      `- **Descricao:** ${f.message}`,
+      `- **Evidencia:** ${f.snippet}`
+    );
   }
 
   return lines.join('\n');

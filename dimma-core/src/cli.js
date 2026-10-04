@@ -10,6 +10,7 @@ const { checkPqcReadiness, formatPqcReport } = require('./security/pqc');
 const { classifyWithAI, PROVIDERS } = require('./security/aiClassifier');
 const { injectAll, ejectFile } = require('./injector');
 const { startProxy } = require('./proxy');
+const { installStyles } = require('./ide');
 
 // ── Detecção de stack e ficheiro principal ────────────────────────────────────
 function detectStack(cwd) {
@@ -79,7 +80,7 @@ function init() {
   }
 
   console.log('Instalar a biblioteca:');
-  if (stack === 'node')   console.log('  npm install dimma-core');
+  if (stack === 'node')   console.log('  npm install dimma');
   if (stack === 'python') console.log('  pip install dimma');
   console.log('');
   console.log('Depois de configurar @files_protect, injectar as proteccoes:');
@@ -296,6 +297,11 @@ async function main() {
     case 'scan':      return scan(args);
     case 'pqc-check': return pqcCheck();
     case 'ai-check':  return aiCheck(args);
+    case 'styles':
+      if (args.length !== 0) {
+        throw new Error('Uso: dimma styles');
+      }
+      return installStyles();
     case '--version':
     case '-v':
       return console.log(require('../package.json').version);
@@ -309,6 +315,7 @@ async function main() {
       console.log('    --supply-chain-online  tambem verifica pacotes recem-publicados (rede)');
       console.log('  pqc-check        Verifica prontidao para TLS pos-quantico');
       console.log('  ai-check         Verifica configuracao do provider IA (--test faz chamada externa)');
+      console.log('  styles           Instala a extensao e ativa os estilos no workspace (VS Code/Cursor)');
       console.log('');
       console.log('  Para comecar:  dimma init');
   }

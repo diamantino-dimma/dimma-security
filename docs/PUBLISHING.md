@@ -4,18 +4,19 @@ Este projeto publica artefactos independentes:
 
 | Artefacto | Registry/distribuição | Nome configurado |
 |---|---|---|
-| Motor Node.js | npm | `dimma-core` |
+| Motor Node.js | npm | `dimma` |
 | Motor Python | PyPI | `dimma` |
 | Tema de ícones VS Code/Cursor | Visual Studio Marketplace e Open VSX | `dimma-file-icons` |
 | Tipo de ficheiro JetBrains | JetBrains Marketplace ou ZIP | `dimma-jetbrains-file-icons` |
 
 Publicar um pacote não publica os outros nem instala um tema de ícones no IDE.
 O Visual Studio (IDE completo) ainda não tem uma extensão Dimma própria.
-Em 2026-10-04, `dimma==1.0.0` foi publicado no PyPI. O nome `dimma-core`
-continuava sem publicação no npm quando foi consultado. Confirme os estados
-dos registries antes de cada novo release.
+Em 2026-10-04, `dimma==1.0.0` foi publicado no PyPI. Em 2026-10-04, consultas
+sem autenticação ao npm devolveram `E404` para `dimma` e `dimma-core`; isto
+não confirma a disponibilidade do nome para publicação pela conta autenticada.
+Confirme novamente antes de publicar.
 
-## Estado e bloqueios antes de publicar no npm
+## Estado antes de publicar no npm
 
 Os metadados locais já apontam para o repositório público e identificam
 `DiMMA` como autor/titular.
@@ -25,13 +26,10 @@ Os metadados locais já apontam para o repositório público e identificam
   a distribuição pública sob MIT, incluindo nome e logótipo.
 - [x] **Identidade pública:** o URL `https://github.com/diamantino-dimma/dimma-security`
   foi adicionado aos metadados npm/PyPI e aos READMEs dos pacotes.
-- [ ] **Auditoria npm:** a verificação executada em 2026-10-04 reportou três
-  alertas high transitivos (`http-proxy-middleware` → `micromatch` → `braces`).
-  O hook `prepublishOnly` bloqueia `npm publish` enquanto o audit reportar
-  high. A opção recomendada é corrigir por atualização compatível e testar.
-  Uma aceitação formal do risco, por si só, não desbloqueia o hook: só altere
-  essa política com aprovação explícita e registo da decisão. Não use
-  `npm audit fix --force` sem rever o downgrade breaking que o audit propõe.
+- [x] **Auditoria npm:** `prepublishOnly` e CI mantêm o nível `high` com
+  `better-npm-audit` e excluem apenas `GHSA-vfj7-8cjw-p6xm`, documentada em
+  `dimma-core/SECURITY_EXCEPTIONS.md`. Remova a exceção quando houver fix
+  upstream; não use `npm audit fix --force` sem rever o downgrade breaking.
 - [ ] **Teste JetBrains:** instale JDK 17 e Gradle, execute `gradle buildPlugin`
   em `extensions/jetbrains/`, instale o ZIP gerado num IDE de teste e confirme
   o ícone em `security.dimma`. Esta compilação/teste ainda não foi executada
@@ -68,7 +66,7 @@ Na raiz do repositório, execute:
 ```powershell
 npm --prefix .\dimma-core ci
 npm --prefix .\dimma-core test
-npm --prefix .\dimma-core audit --omit=dev
+npm --prefix .\dimma-core exec -- better-npm-audit audit --production --level high --exclude GHSA-vfj7-8cjw-p6xm
 npm --prefix .\dimma-core pack --dry-run
 
 Set-Location .\dimma-python
@@ -85,15 +83,16 @@ Inspecione o conteúdo do `.tgz`, do `.whl` e do `.tar.gz` antes de enviar.
 Confirme que incluem README e LICENSE, não incluem `.venv`, `node_modules`,
 ficheiros `.env`, chaves ou artefactos de teste desnecessários.
 
-**Bloqueio conhecido:** `npm audit --omit=dev` reportou três vulnerabilidades
-high na cadeia `http-proxy-middleware` → `micromatch` → `braces`. O `npm audit`
-propõe uma alteração breaking com `--force`; não publique um release de
-segurança com este alerta sem primeiro rever uma correção compatível ou
-documentar formalmente a aceitação do risco.
+**Exceção conhecida:** o audit npm ainda reporta a advisory high
+`GHSA-vfj7-8cjw-p6xm` na cadeia `http-proxy-middleware` → `micromatch` →
+`braces`. O gate exclui somente essa GHSA e continua a bloquear outras
+advisories high/critical. Reveja `dimma-core/SECURITY_EXCEPTIONS.md`.
 
 ## 3. Publicar no npm
 
-1. Crie/verifique a conta npm e ative MFA para publicação.
+1. Crie/verifique a conta npm, confirme que `dimma` está disponível para a
+   conta e ative MFA para publicação. A consulta pública E404 não é garantia
+   de disponibilidade para essa conta.
 2. No terminal, autentique-se e confirme a identidade:
 
    ```powershell
@@ -101,9 +100,9 @@ documentar formalmente a aceitação do risco.
    npm whoami
    ```
 
-3. Volte à raiz e publique; o `prepublishOnly` executa os testes e bloqueia
-   o envio se a auditoria encontrar vulnerabilidades high na árvore de
-   produção:
+3. Volte à raiz e publique como pacote público; o `prepublishOnly` executa os
+    testes e bloqueia o envio se a auditoria encontrar outras vulnerabilidades
+    high na árvore de produção:
 
    ```powershell
    npm publish --prefix .\dimma-core --access public
@@ -113,13 +112,14 @@ documentar formalmente a aceitação do risco.
    teste:
 
    ```powershell
-   npm view dimma-core version
-   npm install dimma-core express
+   npm view dimma version
+   npm install dimma express
    ```
 
 Nunca coloque um token npm no repositório nem o inclua na linha de comando.
-O lançamento permanece bloqueado pelo audit até os alertas high serem
-resolvidos e os testes repetidos com sucesso.
+O pacote `dimma` é unscoped e público; npm documenta a publicação de pacotes
+unscoped públicos sem exigir um plano pago. `--access public` deixa a intenção
+explícita.
 
 ## 4. PyPI — já publicado
 

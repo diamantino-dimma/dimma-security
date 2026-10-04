@@ -63,15 +63,21 @@ percent-encoded e rejeita caminhos com codificação inválida/profundamente
 aninhada. A verificação AbuseIPDB só envia endereços IP válidos e não
 globais (incluindo IPv4 mapeado em IPv6) para o serviço externo.
 
-## Ícone de ficheiros `.dimma` no VS Code
+## Ícone e cores de sintaxe dos ficheiros `.dimma`
 
 O SVG está em [`assets/dimma-file-icon.svg`](./assets/dimma-file-icon.svg).
-Há uma extensão de tema de ícones em [`extensions/vscode/`](./extensions/vscode/)
-que associa automaticamente a extensão `.dimma` ao escudo, inclusive em
-`security.dimma`. Instale o `.vsix` pela paleta do VS Code e selecione
-**Dimma File Icons** em **Preferences: File Icon Theme**. A mesma extensão
-pode ser distribuída no Open VSX para ser encontrada no Cursor. Este tema
-autónomo substitui o tema de ícones atualmente selecionado.
+As extensões em [`extensions/vscode/`](./extensions/vscode/) e
+[`extensions/jetbrains/`](./extensions/jetbrains/) associam `.dimma` à
+linguagem Dimma, realçam diretivas, comentários, valores, booleanos, números e
+listas, e mostram o escudo em `security.dimma`. As cores seguem o tema de
+sintaxe ativo no editor.
+
+No VS Code, instala a extensão pela paleta **Extensions: Install from VSIX...**.
+O realce de sintaxe funciona automaticamente; para mostrar também o escudo,
+seleciona **Dimma File Icons and Syntax** em **Preferences: File Icon Theme**.
+A mesma extensão pode ser distribuída no Open VSX para ser instalada no Cursor.
+Selecionar este tema autónomo substitui o tema de ícones atualmente ativo, não
+o tema de cores de sintaxe.
 
 Para manter **Material Icon Theme**, copie o SVG para uma pasta `icons`
 dentro de `%USERPROFILE%\.vscode\extensions\` (por exemplo,
@@ -84,8 +90,15 @@ dentro de `%USERPROFILE%\.vscode\extensions\` (por exemplo,
 }
 ```
 
-Depois execute **Material Icons: Reset** ou reative o tema. O icon do editor
-não é instalado por `npm install dimma-core` nem por `pip install dimma`.
+Depois execute **Material Icons: Reset** ou reative o tema. Essa associação
+altera apenas o ícone: o realce de sintaxe ainda requer a extensão Dimma.
+Instalar `npm install dimma` ou `pip install dimma` não altera o IDE
+automaticamente. Como opção explícita, execute `dimma styles` na pasta do
+projeto. O comando instala o VSIX incluído nos pacotes nos CLIs de VS Code e/ou
+Cursor encontrados no `PATH` e define `workbench.iconTheme` apenas em
+`.vscode/settings.json` desse projeto, preservando outras definições JSON
+válidas. Não executa hooks durante a instalação npm/PyPI, não altera definições
+globais e recusa ficheiros com comentários JSONC.
 Para IntelliJ IDEA e outros IDEs baseados na plataforma JetBrains, existe uma
 integração de tipo de ficheiro em [`extensions/jetbrains/`](./extensions/jetbrains/);
 construa e instale o plugin ZIP indicado no respetivo README. O Visual Studio
@@ -107,11 +120,24 @@ O pacote Python está publicado no PyPI. Instala-o com:
 ```bash
 python -m pip install dimma
 dimma init
+dimma styles
 ```
 
-O pacote Node.js ainda não está publicado no npm; a publicação está bloqueada
-por alertas high de dependências e só deve avançar após a correção e nova
-validação. Quando publicado, a instalação será `npm install dimma-core`.
+For a Node.js project, install both packages and run the same command:
+
+```bash
+npm install dimma express
+npm exec -- dimma styles
+```
+
+The published PyPI version 1.0.0 does not include this new command yet; it will
+be available after the prepared 1.0.1 release is published.
+
+The Node.js package will use the npm name `dimma`; it is not published yet.
+The production audit keeps the `high` threshold and excludes only the
+transitive advisory `GHSA-vfj7-8cjw-p6xm` in `braces@3.0.3`, documented in
+[`dimma-core/SECURITY_EXCEPTIONS.md`](./dimma-core/SECURITY_EXCEPTIONS.md).
+When published, install it with `npm install dimma`.
 
 O reconhecimento do `.dimma` não depende do sistema operacional (como um
 `.pdf` associado a um leitor) — ele é lido pela biblioteca dentro do próprio
@@ -132,7 +158,7 @@ npm install
 
 ```js
 const express = require('express');
-const { DimmaEngine, hashPassword } = require('dimma-core');
+const { DimmaEngine, hashPassword } = require('dimma');
 
 const app = express();
 app.use(express.json());

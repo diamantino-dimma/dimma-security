@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dimma"
-version = "1.0.0"
+version = "1.0.1"
 description = "Motor de seguranca ciberetica declarativo baseado em arquivos .dimma"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -51,3 +51,6 @@ dimma = "dimma.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["dimma*"]
+
+[tool.setuptools.package-data]
+dimma = ["assets/*.vsix"]

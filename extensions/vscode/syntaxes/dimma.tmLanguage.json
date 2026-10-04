@@ -1,0 +1,71 @@
+{
+  "scopeName": "source.dimma",
+  "name": "Dimma",
+  "patterns": [
+    {
+      "name": "comment.line.number-sign.dimma",
+      "match": "^\\s*#.*$"
+    },
+    {
+      "name": "meta.directive.dimma",
+      "match": "^([ \\t]*)(@)([A-Za-z_][A-Za-z0-9_.-]*(?:[ \\t]+[A-Za-z_][A-Za-z0-9_.-]*)?)([ \\t]*)(:)",
+      "captures": {
+        "2": {
+          "name": "punctuation.definition.directive.dimma"
+        },
+        "3": {
+          "name": "keyword.control.directive.dimma"
+        },
+        "5": {
+          "name": "punctuation.separator.key-value.dimma"
+        }
+      }
+    },
+    {
+      "name": "string.quoted.double.dimma",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.dimma",
+          "match": "\\\\."
+        }
+      ]
+    },
+    {
+      "name": "string.quoted.single.dimma",
+      "begin": "'",
+      "end": "'",
+      "patterns": [
+        {
+          "name": "constant.character.escape.dimma",
+          "match": "\\\\."
+        }
+      ]
+    },
+    {
+      "name": "constant.language.boolean.dimma",
+      "match": "\\b(?:true|false)\\b"
+    },
+    {
+      "name": "constant.numeric.dimma",
+      "match": "\\b\\d+(?:\\.\\d+)?\\b"
+    },
+    {
+      "name": "punctuation.section.sequence.begin.dimma",
+      "match": "\\["
+    },
+    {
+      "name": "punctuation.section.sequence.end.dimma",
+      "match": "\\]"
+    },
+    {
+      "name": "punctuation.separator.sequence.dimma",
+      "match": ","
+    },
+    {
+      "name": "string.unquoted.value.dimma",
+      "match": "[^\\s\\[\\],:\"']+"
+    }
+  ]
+}

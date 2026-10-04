@@ -1,9 +1,17 @@
-# Dimma File Icons for VS Code and Cursor
+# Dimma File Icons and Syntax for VS Code and Cursor
 
-Adds the Dimma shield icon to files with the `.dimma` extension, including
-`security.dimma`.
+Adds the Dimma shield icon and syntax highlighting to `.dimma` files,
+including `security.dimma`. Directives, comments, strings, booleans, numbers,
+list delimiters, and values receive separate TextMate scopes. Their displayed
+colors follow the user's active VS Code color theme.
 Cursor uses Open VSX for third-party extensions, so publish this same VSIX
 there if you want Cursor users to find it in the Extensions panel.
+
+The Python and Node.js packages both bundle this VSIX. After installing either,
+run `dimma styles` from the project directory. It installs the VSIX into each
+detected VS Code/Cursor CLI and sets the icon theme only in that workspace's
+`.vscode/settings.json`. It never runs as a package install hook. Refresh the
+bundled VSIX assets in both packages before publishing package updates.
 
 ## Install from a VSIX
 
@@ -12,9 +20,10 @@ there if you want Cursor users to find it in the Extensions panel.
    Palette and select the downloaded file.
 3. Run **Preferences: File Icon Theme** and select **Dimma File Icons**.
 
-This is a standalone icon theme. Selecting it changes the active file icon
-theme; installing `dimma-core` or `dimma` alone cannot change an editor's
-icons.
+The extension contributes syntax highlighting independently of the selected
+icon theme. Selecting **Dimma File Icons** changes the active file icon theme;
+installing either package alone does not change editor settings. Run
+`dimma styles` explicitly to install and activate the bundled extension.
 
 ## Package locally
 

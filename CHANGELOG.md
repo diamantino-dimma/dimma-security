@@ -4,6 +4,63 @@ Este arquivo regista a evolução do projeto a cada sessão de trabalho e indica
 as validações efetivamente executadas; código não testado é identificado como
 tal.
 
+## Relatórios do comando `dimma scan`
+
+- Os achados e a auditoria de dependências são apresentados em secções
+  Markdown, com resumo por severidade, localização, regra, descrição e
+  evidência.
+- CRITICO, ALTO, MEDIO e BAIXO usam cores ANSI diferentes em terminais
+  interativos. A cor é desativada para saída redirecionada e com `NO_COLOR`;
+  `FORCE_COLOR=1` permite ativá-la explicitamente.
+
+## 2026-10-04 — Comando único `dimma styles` e nome npm
+
+- Os pacotes Python e Node incluem o VSIX de ícones e sintaxe. O comando
+  explícito `dimma styles` deteta os CLIs de VS Code/Cursor disponíveis,
+  instala a extensão e ativa `workbench.iconTheme` apenas em
+  `.vscode/settings.json` do projeto atual.
+- A instalação npm/PyPI não executa hooks nem altera o IDE. O comando preserva
+  outras definições JSON e falha sem modificar o ficheiro se `settings.json`
+  não for JSON válido; a ativação global e IDEs JetBrains não são alterados.
+- As cópias VSIX são incluídas nos pacotes e precisam ser atualizadas junto com
+  uma nova versão Python/npm quando a extensão mudar.
+- Como `dimma==1.0.0` já foi publicado no PyPI, a versão Python foi preparada
+  como `1.0.1`; ainda é necessário publicar essa versão para o comando chegar
+  aos utilizadores de `pip install dimma`.
+- O pacote Node foi renomeado de `dimma-core` para `dimma`; módulos gerados
+  pelo injector e exemplos de instalação agora usam `require('dimma')`. A
+  consulta pública npm devolveu E404 para ambos os nomes; confirme a
+  disponibilidade e o acesso da conta no momento da publicação.
+
+## 2026-10-04 — Exceção temporária e explícita no audit npm
+
+- O gate de produção do `dimma-core` e o CI agora usam `better-npm-audit`,
+  mantendo o nível `high` e excluindo apenas `GHSA-vfj7-8cjw-p6xm`. A advisory
+  afeta `braces@3.0.3`; não foi encontrada uma versão corrigida publicada no
+  npm durante esta validação.
+- A exceção está documentada em `dimma-core/SECURITY_EXCEPTIONS.md`. A análise
+  do proxy atual não encontrou um caminho para fornecer ao `braces` o padrão
+  aninhado exigido: o middleware usa o caminho fixo `/`, sem glob configurável.
+  A presença da dependência vulnerável continua reportada pelo audit original;
+  isto não é uma correção upstream nem uma garantia para configurações futuras.
+- `express` foi declarado também como dependência de desenvolvimento, mantendo
+  a peer dependency pública. O lockfile ainda não o marca como `dev: true`,
+  porque `express-rate-limit`, uma dependência de produção, também o exige como
+  peer; não foi alterada a resolução de peers para forçar essa classificação.
+- O audit original sem exclusão continua a reportar uma advisory única
+  (`GHSA-vfj7-8cjw-p6xm`) nos três pacotes da cadeia; não foram encontradas
+  outras advisories `high`/`critical` na árvore auditada.
+
+## 2026-10-04 — Realce de sintaxe da linguagem `.dimma`
+
+- A extensão VS Code/Cursor agora regista a linguagem `.dimma` e um TextMate
+  grammar para diretivas, comentários, valores, booleanos, números, listas e
+  strings.
+- O plugin JetBrains agora associa um tipo de linguagem próprio e inclui lexer,
+  realce de sintaxe e definições de cores configuráveis pelo esquema do IDE.
+- JSON/manifests e cobertura das diretivas foram verificados localmente. O
+  plugin JetBrains ainda requer build com JDK/Gradle e validação visual no IDE.
+
 ## 2026-10-04 — Primeira publicação no PyPI
 
 - Publicado `dimma==1.0.0` no PyPI usando Trusted Publishing (OIDC) do

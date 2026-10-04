@@ -1,5 +1,5 @@
 {
-  "name": "dimma-core",
+  "name": "dimma",
   "version": "1.0.0",
   "description": "Motor de seguranca ciberetica declarativo baseado em arquivos .dimma",
   "author": "DiMMA",
@@ -21,7 +21,9 @@
   ],
   "files": [
     "src/",
+    "assets/",
     "README.md",
+    "SECURITY_EXCEPTIONS.md",
     "LICENSE"
   ],
   "main": "src/index.js",
@@ -29,8 +31,8 @@
     "dimma": "src/cli.js"
   },
   "scripts": {
-    "test": "node test/run.js && node test/run-ai.js && node test/run-block-access.js && node test/run-budget.js && node test/run-redis-anomaly.js && node test/run-redis-ratelimit.js && node test/run-reputation.js && node test/run-scan.js && node test/run-security-fixes.js && node test/run-webauthn.js",
-    "prepublishOnly": "npm test && npm audit --omit=dev --audit-level=high"
+    "test": "node test/run.js && node test/run-ai.js && node test/run-block-access.js && node test/run-budget.js && node test/run-redis-anomaly.js && node test/run-redis-ratelimit.js && node test/run-reputation.js && node test/run-scan.js && node test/run-security-fixes.js && node test/run-webauthn.js && node test/run-ide.js",
+    "prepublishOnly": "npm test && npx better-npm-audit audit --production --level high --exclude GHSA-vfj7-8cjw-p6xm"
   },
   "license": "MIT",
   "engines": {
@@ -50,6 +52,8 @@
     "express": ">=4.18.0"
   },
   "devDependencies": {
+    "better-npm-audit": "^3.11.0",
+    "express": "^5.2.1",
     "ioredis-mock": "^8.13.1",
     "supertest": "^7.2.2"
   }

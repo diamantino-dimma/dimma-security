@@ -6,6 +6,7 @@ import tempfile
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from dimma.scan import scan_project, format_report
+from dimma.security.supply_chain import format_supply_chain_report
 
 passed = 0
 failed = 0
@@ -184,6 +185,64 @@ def _t_reports_incomplete_coverage():
 
 
 test("reporta erros de leitura como cobertura incompleta", _t_reports_incomplete_coverage)
+
+
+def _t_formats_markdown_and_severity_colors():
+    result = {
+        "files_scanned": 4,
+        "errors": [],
+        "findings": [
+            {
+                "severity": severity,
+                "file": "src/example.py",
+                "line": 12,
+                "rule_id": f"rule-{severity}",
+                "message": f"Finding {severity}",
+                "snippet": "unsafe(value)",
+            }
+            for severity in ("critical", "high", "medium", "low")
+        ],
+    }
+    plain = format_report(result, color=False)
+    assert "# Dimma Scan" in plain
+    assert "**Total de achados:** 4" in plain
+    assert "## Achados" in plain
+    assert plain.index("[CRITICO]") < plain.index("[ALTO]")
+    assert plain.index("[ALTO]") < plain.index("[MEDIO]")
+    assert plain.index("[MEDIO]") < plain.index("[BAIXO]")
+    assert "\033[" not in plain
+
+    colored = format_report(result, color=True)
+    assert "\033[31;1mCRITICO\033[0m" in colored
+    assert "\033[91;1mALTO\033[0m" in colored
+    assert "\033[33;1mMEDIO\033[0m" in colored
+    assert "\033[36;1mBAIXO\033[0m" in colored
+
+
+test("formata Markdown e cores distintas para cada severidade", _t_formats_markdown_and_severity_colors)
+
+
+def _t_formats_supply_chain_findings():
+    report = format_supply_chain_report(
+        {
+            "dependencies_checked": 2,
+            "online_check_performed": False,
+            "findings": [{
+                "severity": "high",
+                "package": "example-package",
+                "type": "lockfile-ausente",
+                "message": "Lockfile ausente.",
+            }],
+        },
+        color=True,
+    )
+    assert "## Supply chain guard" in report
+    assert "\033[91;1mALTO\033[0m" in report
+    assert "example-package" in report
+    assert "**Regra:** `lockfile-ausente`" in report
+
+
+test("formata achados de supply chain com a mesma hierarquia", _t_formats_supply_chain_findings)
 
 print(f"\n{passed} passaram, {failed} falharam\n")
 sys.exit(1 if failed else 0)

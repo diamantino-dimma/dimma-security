@@ -260,34 +260,59 @@ async function auditSupplyChain(rootDir, options = {}) {
 }
 
 const SEVERITY_LABEL = { critical: 'CRITICO', high: 'ALTO', medium: 'MEDIO', low: 'BAIXO' };
+const SEVERITY_COLOR = { critical: 31, high: 91, medium: 33, low: 36 };
+const SEVERITY_ORDER = { critical: 0, high: 1, medium: 2, low: 3 };
 
-function formatSupplyChainReport(result) {
-  const lines = [];
-  lines.push('\ndimma supply_chain_guard — auditoria de dependencias\n');
+function formatSupplyChainReport(result, options = {}) {
+  let color = options.color;
+  if (color === undefined) {
+    color = !Object.prototype.hasOwnProperty.call(process.env, 'NO_COLOR') &&
+      ((process.env.FORCE_COLOR && process.env.FORCE_COLOR !== '0') || Boolean(process.stdout.isTTY));
+  }
+  const formatSeverity = (severity) => {
+    const label = SEVERITY_LABEL[severity] || String(severity).toUpperCase();
+    const ansiColor = SEVERITY_COLOR[severity];
+    return color && ansiColor ? `\u001b[${ansiColor};1m${label}\u001b[0m` : label;
+  };
+  const lines = ['## Supply chain guard', ''];
 
   if (result.skipped) {
-    lines.push(`Pulado: ${result.reason}`);
+    lines.push('- **Estado:** pulado', `- **Motivo:** ${result.reason}`);
     return lines.join('\n');
   }
 
-  lines.push(`${result.dependenciesChecked} dependencia(s) verificada(s).`);
-  lines.push(
+  lines.push(`- **Dependencias verificadas:** ${result.dependenciesChecked}`);
+  lines.push(`- **Verificacao de idade de publicacao:** ${
     result.onlineCheckPerformed
-      ? 'Verificacao de idade de publicacao: ATIVA (consulta ao registry).'
-      : 'Verificacao de idade de publicacao: DESATIVADA (use --supply-chain-online para ativar).'
-  );
-  lines.push('');
+      ? 'ativa (consulta ao registry)'
+      : 'desativada (use --supply-chain-online para ativar)'
+  }`);
+  const counts = result.findings.reduce((acc, finding) => {
+    acc[finding.severity] = (acc[finding.severity] || 0) + 1;
+    return acc;
+  }, {});
+  lines.push(`- **Severidades:** ${['critical', 'high', 'medium', 'low']
+    .map((severity) => `${formatSeverity(severity)} ${counts[severity] || 0}`)
+    .join(' | ')}`);
 
   if (result.findings.length === 0) {
-    lines.push('Nenhum problema de supply chain encontrado. \u2705');
+    lines.push('', 'Nenhum problema de supply chain encontrado. \u2705');
     return lines.join('\n');
   }
 
-  for (const f of result.findings) {
-    const pkg = f.package ? ` [${f.package}]` : '';
-    lines.push(`[${SEVERITY_LABEL[f.severity] || f.severity.toUpperCase()}]${pkg} (${f.type})`);
-    lines.push(`  ${f.message}`);
-    lines.push('');
+  lines.push('', '### Achados');
+  const sortedFindings = [...result.findings].sort(
+    (a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]
+  );
+  for (const f of sortedFindings) {
+    const pkg = f.package ? ` — ${f.package}` : '';
+    lines.push(
+      '',
+      `#### [${formatSeverity(f.severity)}]${pkg}`,
+      '',
+      `- **Regra:** \`${f.type}\``,
+      `- **Descricao:** ${f.message}`
+    );
   }
 
   return lines.join('\n');

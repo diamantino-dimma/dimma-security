@@ -17,6 +17,8 @@ htmlcov/
 *.tgz
 *.whl
 *.vsix
+!dimma-python/dimma/assets/dimma-file-icons.vsix
+!dimma-core/assets/dimma-file-icons.vsix
 *.zip
 .gradle/
 out/

@@ -13,7 +13,10 @@
     <fileType name="Dimma"
               implementationClass="com.dimma.fileicons.DimmaFileType"
               fieldName="INSTANCE"
-              language="TEXT"
+              language="Dimma"
               extensions="dimma" />
+    <lang.syntaxHighlighterFactory language="Dimma"
+                                   implementationClass="com.dimma.fileicons.DimmaSyntaxHighlighterFactory" />
+    <colorSettingsPage implementation="com.dimma.fileicons.DimmaColorSettingsPage" />
   </extensions>
 </idea-plugin>

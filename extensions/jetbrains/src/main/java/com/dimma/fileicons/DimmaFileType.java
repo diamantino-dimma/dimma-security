@@ -1,7 +1,6 @@
 package com.dimma.fileicons;
 
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,7 +10,7 @@ public final class DimmaFileType extends LanguageFileType {
     public static final DimmaFileType INSTANCE = new DimmaFileType();
 
     private DimmaFileType() {
-        super(PlainTextLanguage.INSTANCE);
+        super(DimmaLanguage.INSTANCE);
     }
 
     @Override

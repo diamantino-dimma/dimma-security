@@ -8,6 +8,7 @@ dataflow/taint analysis completo).
 """
 import os
 import re
+import sys
 from dataclasses import dataclass
 from typing import List, Optional
 
@@ -149,44 +150,72 @@ def scan_project(root_dir: str) -> dict:
 
 SEVERITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
 SEVERITY_LABEL = {"critical": "CRITICO", "high": "ALTO", "medium": "MEDIO", "low": "BAIXO"}
+SEVERITY_COLOR = {"critical": 31, "high": 91, "medium": 33, "low": 36}
 
 
-def format_report(result: dict) -> str:
-    lines = [f"\ndimma scan — {result['files_scanned']} arquivo(s) analisado(s)\n"]
+def _color_enabled(requested: Optional[bool]) -> bool:
+    if requested is not None:
+        return requested
+    if "NO_COLOR" in os.environ:
+        return False
+    if os.environ.get("FORCE_COLOR") and os.environ["FORCE_COLOR"] != "0":
+        return True
+    return bool(sys.stdout.isatty())
+
+
+def _format_severity(severity: str, color: bool) -> str:
+    label = SEVERITY_LABEL.get(severity, str(severity).upper())
+    ansi_color = SEVERITY_COLOR.get(severity)
+    return f"\033[{ansi_color};1m{label}\033[0m" if color and ansi_color else label
+
+
+def format_report(result: dict, color: Optional[bool] = None) -> str:
     findings = result["findings"]
     errors = result.get("errors", [])
+    use_color = _color_enabled(color)
+    counts = {}
+    for finding in findings:
+        counts[finding["severity"]] = counts.get(finding["severity"], 0) + 1
+
+    lines = [
+        "# Dimma Scan",
+        "",
+        f"- **Ficheiros analisados:** {result['files_scanned']}",
+        f"- **Total de achados:** {len(findings)}",
+        "- **Severidades:** " + " | ".join(
+            f"{_format_severity(severity, use_color)} {counts.get(severity, 0)}"
+            for severity in ("critical", "high", "medium", "low")
+        ),
+    ]
 
     if errors:
-        lines.append(f"Cobertura incompleta: {len(errors)} erro(s) ao ler ficheiros/diretorios.")
+        lines.extend(["", "## Cobertura incompleta", "", f"{len(errors)} erro(s) ao ler ficheiros/diretorios:"])
         for error in errors:
-            lines.append(f"[ERRO] {error['path']}: {error['message']}")
-        lines.append("")
+            lines.append(f"- **{error['path']}:** {error['message']}")
 
     if not findings:
-        lines.append(
+        lines.extend([
+            "",
+            "## Resultado",
+            "",
             "Nenhum padrao encontrado nos ficheiros legiveis; o scan esta incompleto."
-            if errors else
-            "Nenhum padrao inseguro conhecido foi encontrado. \u2705"
-        )
-        lines.append("(Lembrete: isto e uma analise estatica leve, nao substitui revisao de codigo nem prepared statements.)")
+            if errors else "Nenhum padrao inseguro conhecido foi encontrado. \u2705",
+            "",
+            "> Analise estatica por padroes; nao substitui revisao de codigo nem prepared statements.",
+        ])
         return "\n".join(lines)
 
     sorted_findings = sorted(findings, key=lambda f: SEVERITY_ORDER[f["severity"]])
-    counts: dict = {}
-    for f in findings:
-        counts[f["severity"]] = counts.get(f["severity"], 0) + 1
-
-    summary = ", ".join(
-        f"{count} {SEVERITY_LABEL[sev]}"
-        for sev, count in sorted(counts.items(), key=lambda kv: SEVERITY_ORDER[kv[0]])
-    )
-    lines.append(f"Encontrados {len(findings)} problema(s): {summary}")
-    lines.append("")
+    lines.extend(["", "## Achados"])
 
     for f in sorted_findings:
-        lines.append(f"[{SEVERITY_LABEL[f['severity']]}] {f['file']}:{f['line']} ({f['rule_id']})")
-        lines.append(f"  {f['message']}")
-        lines.append(f"  > {f['snippet']}")
-        lines.append("")
+        lines.extend([
+            "",
+            f"### [{_format_severity(f['severity'], use_color)}] {f['file']}:{f['line']}",
+            "",
+            f"- **Regra:** `{f['rule_id']}`",
+            f"- **Descricao:** {f['message']}",
+            f"- **Evidencia:** {f['snippet']}",
+        ])
 
     return "\n".join(lines)

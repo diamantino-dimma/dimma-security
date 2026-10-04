@@ -5,6 +5,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { scanProject, formatReport } = require('../src/scan');
+const { formatSupplyChainReport } = require('../src/security/supplyChain');
 
 let passed = 0;
 let failed = 0;
@@ -148,6 +149,52 @@ test('reporta erros de leitura como cobertura incompleta', () => {
   const report = formatReport(result);
   assert.match(report, /Cobertura incompleta/);
   assert.match(report, /scan esta incompleto/);
+});
+
+test('formata o relatorio Markdown e diferencia as severidades por cor', () => {
+  const result = {
+    filesScanned: 4,
+    errors: [],
+    findings: ['critical', 'high', 'medium', 'low'].map((severity) => ({
+      severity,
+      file: 'src/example.js',
+      line: 12,
+      ruleId: `rule-${severity}`,
+      message: `Finding ${severity}`,
+      snippet: 'unsafe(value)',
+    })),
+  };
+  const plain = formatReport(result, { color: false });
+  assert.match(plain, /^# Dimma Scan/m);
+  assert.match(plain, /\*\*Total de achados:\*\* 4/);
+  assert.match(plain, /## Achados/);
+  assert.ok(plain.indexOf('[CRITICO]') < plain.indexOf('[ALTO]'));
+  assert.ok(plain.indexOf('[ALTO]') < plain.indexOf('[MEDIO]'));
+  assert.ok(plain.indexOf('[MEDIO]') < plain.indexOf('[BAIXO]'));
+  assert.doesNotMatch(plain, /\u001b\[/);
+
+  const colored = formatReport(result, { color: true });
+  assert.match(colored, /\u001b\[31;1mCRITICO\u001b\[0m/);
+  assert.match(colored, /\u001b\[91;1mALTO\u001b\[0m/);
+  assert.match(colored, /\u001b\[33;1mMEDIO\u001b\[0m/);
+  assert.match(colored, /\u001b\[36;1mBAIXO\u001b\[0m/);
+});
+
+test('formata achados de supply chain com a mesma hierarquia de severidade', () => {
+  const report = formatSupplyChainReport({
+    dependenciesChecked: 2,
+    onlineCheckPerformed: false,
+    findings: [{
+      severity: 'high',
+      package: 'example-package',
+      type: 'lockfile-ausente',
+      message: 'Lockfile ausente.',
+    }],
+  }, { color: true });
+  assert.match(report, /^## Supply chain guard/m);
+  assert.match(report, /\u001b\[91;1mALTO\u001b\[0m/);
+  assert.match(report, /example-package/);
+  assert.match(report, /\*\*Regra:\*\* `lockfile-ausente`/);
 });
 
 console.log(`\n${passed} passaram, ${failed} falharam\n`);

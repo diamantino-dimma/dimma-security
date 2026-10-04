@@ -102,8 +102,8 @@ console.log(parseDimma(fs.readFileSync('./security.dimma', 'utf-8')).config);
 o `.dimma` ativo.
 
 **Pontos de fala:**
-- Dois motores: `dimma-core` (Node/Express) e `dimma` (Python/Flask) —
-  mesma linguagem `.dimma`, funcionalidades equivalentes.
+- Dois pacotes chamados `dimma`, em registries distintos: npm para Node/Express
+  e PyPI para Python/Flask — a mesma linguagem `.dimma`.
 - Explique a auto-criação: se `DimmaEngine(caminho)` for chamado e o
   arquivo não existir, ele é criado automaticamente com o perfil padrão
   — não precisa rodar nada manualmente antes.
@@ -114,10 +114,10 @@ o `.dimma` ativo.
 **Demo ao vivo (Node):**
 ```bash
 mkdir meu-projeto && cd meu-projeto
-npm init -y && npm install express dimma-core
+npm init -y && npm install express dimma
 node -e "
 const express = require('express');
-const { DimmaEngine } = require('dimma-core');
+const { DimmaEngine } = require('dimma');
 const app = express();
 const dimma = new DimmaEngine('./security.dimma'); // cria sozinho
 dimma.protect(app);
@@ -216,7 +216,7 @@ em produção com múltiplas instâncias, e como o `.dimma` resolve isso.
 
 **Demo ao vivo:**
 ```js
-const { hashPassword, verifyPassword } = require('dimma-core');
+const { hashPassword, verifyPassword } = require('dimma');
 const hash = await hashPassword('minhaSenhaForte123');
 console.log(hash); // $2b$12$...
 console.log(await verifyPassword('minhaSenhaForte123', hash)); // true

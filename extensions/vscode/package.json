@@ -1,10 +1,15 @@
 {
   "name": "dimma-file-icons",
-  "displayName": "Dimma File Icons",
-  "description": "File icon theme for .dimma security configuration files",
+  "displayName": "Dimma File Icons and Syntax",
+  "description": "File icons and syntax highlighting for .dimma security configuration files",
   "version": "1.0.0",
   "publisher": "your-publisher-id",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/diamantino-dimma/dimma-security.git"
+  },
+  "homepage": "https://github.com/diamantino-dimma/dimma-security/tree/main/extensions/vscode",
   "engines": {
     "vscode": "^1.80.0"
   },
@@ -14,11 +19,33 @@
   "files": [
     "icons/**",
     "themes/**",
+    "syntaxes/**",
+    "language-configuration.json",
     "README.md",
     "LICENSE",
     "package.json"
   ],
   "contributes": {
+    "languages": [
+      {
+        "id": "dimma",
+        "aliases": [
+          "Dimma",
+          "dimma"
+        ],
+        "extensions": [
+          ".dimma"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "dimma",
+        "scopeName": "source.dimma",
+        "path": "./syntaxes/dimma.tmLanguage.json"
+      }
+    ],
     "iconThemes": [
       {
         "id": "dimma-file-icons",

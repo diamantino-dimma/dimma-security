@@ -71,14 +71,14 @@ function injectJS(source, dimmaPath, moduleFormat) {
   const relPath = JSON.stringify(dimmaPath.replace(/\\/g, '/'));
   const code = isEsm
     ? [
-        `import { DimmaEngine as _DimmaEngine } from 'dimma-core';`,
+        `import { DimmaEngine as _DimmaEngine } from 'dimma';`,
         `import { fileURLToPath as _dimmaFileURLToPath } from 'node:url';`,
         `import { dirname as _dimmaDirname, resolve as _dimmaResolve } from 'node:path';`,
         `const _dimma = new _DimmaEngine(_dimmaResolve(_dimmaDirname(_dimmaFileURLToPath(import.meta.url)), ${relPath}));`,
         `_dimma.protect(${appVar});`,
       ]
     : [
-        `const { DimmaEngine: _DimmaEngine } = require('dimma-core');`,
+        `const { DimmaEngine: _DimmaEngine } = require('dimma');`,
         `const _dimma = new _DimmaEngine(require('node:path').resolve(__dirname, ${relPath}));`,
         `_dimma.protect(${appVar});`,
       ];

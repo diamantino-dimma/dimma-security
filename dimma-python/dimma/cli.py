@@ -7,6 +7,7 @@ from .scan import scan_project, format_report
 from .security.supply_chain import audit_supply_chain, format_supply_chain_report
 from .security.pqc import check_pqc_readiness, format_pqc_report
 from .security.ai import PROVIDERS, classify_with_ai
+from .ide import install_styles
 
 
 def detect_stack(cwd: str) -> str:
@@ -44,7 +45,7 @@ def init() -> None:
         print("  dimma.protect(app)")
     elif stack == "node":
         print("\nProximo passo:")
-        print("  npm install dimma-core")
+        print("  npm install dimma")
     else:
         print("\nNao foi possivel detectar a stack automaticamente.")
 
@@ -178,6 +179,12 @@ def main() -> None:
         pqc_check()
     elif command == "ai-check":
         ai_check(args[1:])
+    elif command == "styles":
+        try:
+            install_styles(args[1:])
+        except (OSError, RuntimeError) as error:
+            print(f"[dimma] Ativacao dos estilos falhou: {error}", file=sys.stderr)
+            sys.exit(1)
     else:
         print("Uso:")
         print("  dimma init        Cria um security.dimma na pasta atual e detecta a stack do projeto.")
@@ -185,6 +192,7 @@ def main() -> None:
         print("    --supply-chain-online  tambem verifica pacotes recem-publicados no PyPI (rede)")
         print("  dimma pqc-check   Verifica se o runtime suporta troca de chaves TLS pos-quantica.")
         print("  dimma ai-check    Verifica a configuracao de IA (--test faz chamada externa).")
+        print("  dimma styles      Instala a extensao e ativa o tema no projeto (VS Code/Cursor).")
 
 
 if __name__ == "__main__":

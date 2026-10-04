@@ -21,7 +21,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - run: npm ci
       - run: npm test
-      - run: npm audit --omit=dev --audit-level=high
+      - run: npx better-npm-audit audit --production --level high --exclude GHSA-vfj7-8cjw-p6xm
       - run: npm pack --dry-run
 
   python:
