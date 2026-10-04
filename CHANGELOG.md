@@ -13,6 +13,13 @@ tal.
   interativos. A cor é desativada para saída redirecionada e com `NO_COLOR`;
   `FORCE_COLOR=1` permite ativá-la explicitamente.
 
+## Compatibilidade Python 3.9
+
+- O CI confirmou que `flask-limiter>=4.1.0` já não pode ser instalado em
+  Python 3.9. O pacote e as dependências de teste agora selecionam Flask-Limiter
+  3.x para Python 3.9 e 4.x para Python 3.10 ou superior, mantendo a versão
+  mínima Python declarada e a mesma API usada pelo Dimma.
+
 ## 2026-10-04 — Comando único `dimma styles` e nome npm
 
 - Os pacotes Python e Node incluem o VSIX de ícones e sintaxe. O comando
