@@ -133,57 +133,67 @@ resolvidos e os testes repetidos com sucesso.
 
 ## 4. Publicar no PyPI
 
-1. Crie uma conta separada em [TestPyPI](https://test.pypi.org/account/register/)
-   e confirme o endereço de email. TestPyPI é o ambiente de teste; a conta e
-   os tokens não são os mesmos do PyPI oficial.
-2. Em TestPyPI, abra **Account settings → API tokens** e crie um token para
-   upload. Como o projeto ainda não existe no índice, poderá ser necessário
-   um token com âmbito da conta. Guarde-o num gestor de segredos.
-3. Gere e valide os artefactos conforme a secção 2. A versão precisa estar
-   disponível em TestPyPI; não é possível substituir uma versão já enviada.
-4. Publique primeiro em TestPyPI:
+O workflow `.github/workflows/publish-pypi.yml` publica no PyPI através de
+Trusted Publishing (OIDC), sem guardar um token PyPI no GitHub.
+
+### Configurar o Trusted Publisher pendente no PyPI
+
+Na página **Publishing → Add a new pending publisher**, seleciona **GitHub**
+e preenche exatamente:
+
+| Campo no PyPI | Valor |
+|---|---|
+| PyPI Project Name | `dimma` |
+| Owner | `diamantino-dimma` |
+| Repository name | `dimma-security` |
+| Workflow name | `publish-pypi.yml` |
+| Environment name | `pypi` |
+
+O proprietário e o repositório correspondem a
+`https://github.com/diamantino-dimma/dimma-security`. O nome do workflow é
+apenas o nome do ficheiro dentro de `.github/workflows/`, não o título
+apresentado no GitHub Actions.
+
+Antes de submeter o formulário, este workflow tem de estar commitado e enviado
+para a branch `main`. Um publisher pendente permite criar o projeto no primeiro
+upload, mas **não reserva** o nome `dimma`; conclui a configuração e o primeiro
+release sem atrasos desnecessários.
+
+No GitHub, abre **Settings → Environments** no repositório e cria o ambiente
+com o nome exato `pypi`. É o mesmo valor do campo Environment no PyPI.
+Recomendamos ativar aprovação de deployment para o ambiente, se essa opção
+estiver disponível no plano da conta.
+
+### Testar e publicar
+
+1. (Opcional, recomendado) Cria uma conta separada no
+   [TestPyPI](https://test.pypi.org/account/register/) e valida primeiro o
+   pacote nesse índice. TestPyPI usa conta e credenciais separadas; para
+   Trusted Publishing de TestPyPI é necessário configurar publisher e workflow
+   também nesse serviço. A versão não pode ser reenviada depois de usada.
+2. Antes do release oficial, executa localmente as verificações da secção 2.
+   O workflow repetirá as suites Python, construirá wheel/sdist e executará
+   `twine check` antes de solicitar a publicação.
+3. Confirma que a versão em `dimma-python/pyproject.toml` nunca foi publicada
+   no PyPI e que o nome do projeto continua disponível.
+4. Cria uma GitHub Release com uma tag correspondente à versão, por exemplo
+   `dimma-python-v1.0.0`, e publica a release. Isso inicia o workflow
+   `Publish Python package to PyPI`. A configuração OIDC do PyPI só permite
+   publicar se owner, repositório, workflow e ambiente coincidirem.
+5. Acompanha **Actions** no GitHub. Só declares o release concluído quando o
+   job tiver terminado com sucesso e a página
+   [pypi.org/project/dimma](https://pypi.org/project/dimma/) mostrar a versão.
+6. Testa a instalação num ambiente limpo:
 
    ```powershell
-   Set-Location .\dimma-python
-   .\.venv\Scripts\python.exe -m twine upload --repository testpypi dist/*
+   py -m venv "$env:TEMP\dimma-release-check"
+   & "$env:TEMP\dimma-release-check\Scripts\python.exe" -m pip install "dimma==1.0.0"
+   & "$env:TEMP\dimma-release-check\Scripts\python.exe" -m pip show dimma
    ```
 
-   Quando solicitado, use `__token__` como nome de utilizador e cole o token
-   TestPyPI como senha. Nunca o incluas na linha de comando, num ficheiro
-   versionado ou nesta conversa.
-
-5. Verifique que a versão aparece em
-   [TestPyPI](https://test.pypi.org/project/dimma/) e teste a instalação num
-   ambiente virtual descartável. O índice oficial é usado para dependências:
-
-   ```powershell
-   .\.venv\Scripts\python.exe -m venv "$env:TEMP\dimma-testpypi-venv"
-   & "$env:TEMP\dimma-testpypi-venv\Scripts\python.exe" -m pip install `
-     --index-url https://test.pypi.org/simple/ `
-     --extra-index-url https://pypi.org/simple/ "dimma==1.0.0"
-   & "$env:TEMP\dimma-testpypi-venv\Scripts\python.exe" -m pip show dimma
-   ```
-
-6. Só depois do teste, crie/confirme a conta PyPI oficial em
-   [pypi.org/account/register](https://pypi.org/account/register/), ative MFA,
-   e crie um token separado para o PyPI. Confirme imediatamente antes de
-   enviar que `dimma==1.0.0` continua disponível.
-7. Envie os mesmos artefactos já testados para PyPI oficial; Twine pede as
-   credenciais no terminal:
-
-   ```powershell
-   .\.venv\Scripts\python.exe -m twine upload dist/*
-   ```
-
-   Usa `__token__` e o token PyPI (não o de TestPyPI) nas solicitações.
-8. Verifique a página do projeto e teste a instalação oficial:
-
-   ```powershell
-   .\.venv\Scripts\python.exe -m pip install dimma
-   ```
-
-Nunca publique tokens, nem os grave no histórico do PowerShell ou em ficheiros
-versionados. Se os tokens ficarem comprometidos, revogue-os imediatamente.
+OIDC evita tokens de publicação de longa duração. Nunca adiciones segredos
+PyPI ao workflow nem ao repositório. Para detalhes oficiais, consulta
+[Trusted Publishers](https://docs.pypi.org/trusted-publishers/).
 
 ## 5. Distribuir o ícone no VS Code
 
