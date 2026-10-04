@@ -1,0 +1,19 @@
+# security.dimma — configuracao de seguranca do projecto
+# Gerado como exemplo pelo motor dimma-core
+
+# OBRIGATORIO: declare os ficheiros que o .dimma deve proteger
+@files_protect: [example/app.js]
+
+# Modo proxy autonomo (opcional)
+# @target: http://localhost:3000
+# @listen: 8080
+
+@auto_protect: true
+@protect input: [sql_injection, xss]
+@rate_limit: 100 req/min
+@csrf_protection: true
+@security_headers: true
+@anomaly_detection: true
+@password_hashing: bcrypt
+@session_expiry: 30
+@exclude: /health

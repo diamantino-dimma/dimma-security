@@ -1,0 +1,10 @@
+{
+  "iconDefinitions": {
+    "_dimma": {
+      "iconPath": "../icons/dimma-file-icon.svg"
+    }
+  },
+  "fileExtensions": {
+    "dimma": "_dimma"
+  }
+}

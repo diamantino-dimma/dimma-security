@@ -1,0 +1,29 @@
+# JavaScript dependencies
+node_modules/
+
+# Python environments, caches and build artifacts
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local package artifacts
+*.tgz
+*.whl
+*.vsix
+*.zip
+.gradle/
+out/
+
+# Dimma backups and local secrets/configuration
+*.dimma.bak
+*.dimma.eject.bak
+.env
+.env.*
+!.env.example

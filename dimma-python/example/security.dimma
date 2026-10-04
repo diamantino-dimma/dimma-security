@@ -1,0 +1,12 @@
+# security.dimma — configuracao de seguranca do projeto
+# Gerado como exemplo pelo motor dimma-core
+
+@auto_protect: true
+@protect input: [sql_injection, xss]
+@rate_limit: 100 req/min
+@csrf_protection: true
+@security_headers: true
+@anomaly_detection: true
+@password_hashing: bcrypt
+@session_expiry: 30
+@exclude: /health

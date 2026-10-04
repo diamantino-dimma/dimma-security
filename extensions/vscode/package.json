@@ -1,0 +1,30 @@
+{
+  "name": "dimma-file-icons",
+  "displayName": "Dimma File Icons",
+  "description": "File icon theme for .dimma security configuration files",
+  "version": "1.0.0",
+  "publisher": "your-publisher-id",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Themes"
+  ],
+  "files": [
+    "icons/**",
+    "themes/**",
+    "README.md",
+    "LICENSE",
+    "package.json"
+  ],
+  "contributes": {
+    "iconThemes": [
+      {
+        "id": "dimma-file-icons",
+        "label": "Dimma File Icons",
+        "path": "./themes/dimma-icon-theme.json"
+      }
+    ]
+  }
+}

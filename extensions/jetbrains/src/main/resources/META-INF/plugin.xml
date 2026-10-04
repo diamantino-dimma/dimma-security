@@ -1,0 +1,19 @@
+<idea-plugin>
+  <id>com.dimma.fileicons</id>
+  <name>Dimma File Icons</name>
+  <version>1.0.0</version>
+  <vendor>Dimma</vendor>
+  <description><![CDATA[
+    Adds the Dimma shield icon and file type association for .dimma security
+    configuration files.
+  ]]></description>
+  <idea-version since-build="241" />
+  <depends>com.intellij.modules.platform</depends>
+  <extensions defaultExtensionNs="com.intellij">
+    <fileType name="Dimma"
+              implementationClass="com.dimma.fileicons.DimmaFileType"
+              fieldName="INSTANCE"
+              language="TEXT"
+              extensions="dimma" />
+  </extensions>
+</idea-plugin>
