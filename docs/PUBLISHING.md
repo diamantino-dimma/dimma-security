@@ -178,9 +178,14 @@ estiver disponível no plano da conta.
    no PyPI e que o nome do projeto continua disponível.
 4. Cria uma GitHub Release com uma tag correspondente à versão, por exemplo
    `dimma-python-v1.0.0`, e publica a release. Isso inicia o workflow
-   `Publish Python package to PyPI`. A configuração OIDC do PyPI só permite
-   publicar se owner, repositório, workflow e ambiente coincidirem.
-5. Acompanha **Actions** no GitHub. Só declares o release concluído quando o
+   `Publish Python package to PyPI`. Para executar manualmente ou repetir uma
+   tentativa falhada, abre **Actions → Publish Python package to PyPI →
+   Run workflow**, escolhe `main` e executa-o uma única vez. O workflow envia
+   os artefactos de `dimma-python/dist/`. A configuração OIDC do PyPI só
+   permite publicar se owner, repositório, workflow e ambiente coincidirem.
+5. Acompanha **Actions** no GitHub. Se uma tentativa falhar, lê o passo
+   vermelho antes de repetir; não faças várias execuções simultâneas. Só
+   declares o release concluído quando o
    job tiver terminado com sucesso e a página
    [pypi.org/project/dimma](https://pypi.org/project/dimma/) mostrar a versão.
 6. Testa a instalação num ambiente limpo:
