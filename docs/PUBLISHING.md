@@ -11,23 +11,20 @@ Este projeto publica artefactos independentes:
 
 Publicar um pacote não publica os outros nem instala um tema de ícones no IDE.
 O Visual Studio (IDE completo) ainda não tem uma extensão Dimma própria.
-Verificação em 2026-10-04: as APIs públicas do npm e PyPI responderam 404 para
-`dimma-core` e `dimma`. Confirme novamente disponibilidade e conta/registry
-imediatamente antes do primeiro envio.
+Em 2026-10-04, `dimma==1.0.0` foi publicado no PyPI. O nome `dimma-core`
+continuava sem publicação no npm quando foi consultado. Confirme os estados
+dos registries antes de cada novo release.
 
-## Estado e bloqueios antes de publicar npm/PyPI
+## Estado e bloqueios antes de publicar no npm
 
 Os metadados locais já apontam para o repositório público e identificam
-`DiMMA` como autor/titular. Ainda não publique até fechar estes pontos:
+`DiMMA` como autor/titular.
 
 - [x] **Titular/licença:** a pedido do titular, os avisos de copyright dos
   pacotes Node/Python já identificam `DiMMA`. Confirme que o titular autoriza
   a distribuição pública sob MIT, incluindo nome e logótipo.
 - [x] **Identidade pública:** o URL `https://github.com/diamantino-dimma/dimma-security`
   foi adicionado aos metadados npm/PyPI e aos READMEs dos pacotes.
-- [x] **Disponibilidade observada:** em 2026-10-04, npm e PyPI responderam
-  404 para `dimma-core` e `dimma`. Confirme de novo imediatamente antes de
-  enviar e garanta que a versão `1.0.0` continua disponível.
 - [ ] **Auditoria npm:** a verificação executada em 2026-10-04 reportou três
   alertas high transitivos (`http-proxy-middleware` → `micromatch` → `braces`).
   O hook `prepublishOnly` bloqueia `npm publish` enquanto o audit reportar
@@ -46,28 +43,21 @@ Os metadados locais já apontam para o repositório público e identificam
   ou os segredos protegidos dos marketplaces; nunca grave tokens no código,
   nos ficheiros `.dimma`, em comandos versionados ou no histórico do terminal.
 
-Os nomes do npm/PyPI responderem 404 não valida licença, metadados, testes,
-publisher nem direito de publicação: é apenas uma consulta de disponibilidade
-naquele momento. A publicação da extensão VS Code/Cursor ou do plugin
-JetBrains é um lançamento separado e fica fora do objetivo atual.
+O pacote Python já está publicado; os passos dele abaixo ficam como referência
+para releases futuros. A publicação da extensão VS Code/Cursor ou do plugin
+JetBrains é separada e fica fora do objetivo atual.
 
 ## 1. Antes de criar uma versão
 
-1. Confirme que tem direito a publicar o código, o logótipo e o nome `.dimma`.
-2. Substitua `[COPYRIGHT HOLDER]` nos ficheiros `LICENSE` pela pessoa ou
-   entidade titular dos direitos.
-3. Substitua `your-publisher-id` em
-   `extensions/vscode/package.json` pelo ID da sua conta do Marketplace.
-4. Adicione os URLs reais do repositório e do projeto aos metadados dos
-   pacotes, quando já tiver o URL público definitivo.
-5. Escolha uma versão que ainda não exista nos registries e atualize em
-   conjunto `dimma-core/package.json`, `dimma-core/package-lock.json`,
-   `dimma-python/pyproject.toml`, `extensions/vscode/package.json` e
-   `extensions/jetbrains/build.gradle.kts` mais
-   `extensions/jetbrains/src/main/resources/META-INF/plugin.xml` para os
-   artefactos que serão lançados. As versões podem evoluir independentemente
-   depois da primeira publicação.
-6. Revise `CHANGELOG.md` e o README de cada pacote. Não descreva o scanner
+1. Confirme que DiMMA detém ou tem autorização para publicar o código, o
+   logótipo e o nome, e que a licença MIT representa essa decisão.
+2. Confirme que o nome e a versão estão disponíveis no registry de destino.
+   Não tente reenviar uma versão já publicada; aumente a versão e reconstrua
+   os artefactos para um release futuro.
+3. Mantenha as versões dos pacotes independentes: atualize
+   `dimma-core/package.json` e o lockfile para npm; atualize
+   `dimma-python/pyproject.toml` para PyPI.
+4. Revise `CHANGELOG.md` e o README de cada pacote. Não descreva o scanner
    como pentest ativo ou produto certificado: `dimma scan` é heurístico e
    estático.
 
@@ -131,15 +121,26 @@ Nunca coloque um token npm no repositório nem o inclua na linha de comando.
 O lançamento permanece bloqueado pelo audit até os alertas high serem
 resolvidos e os testes repetidos com sucesso.
 
-## 4. Publicar no PyPI
+## 4. PyPI — já publicado
 
-O workflow `.github/workflows/publish-pypi.yml` publica no PyPI através de
-Trusted Publishing (OIDC), sem guardar um token PyPI no GitHub.
+O pacote `dimma==1.0.0` já está publicado: [PyPI](https://pypi.org/project/dimma/).
+Foi instalado num ambiente virtual temporário limpo e o comando `dimma --help`
+foi verificado. A instalação para utilizadores é:
 
-### Configurar o Trusted Publisher pendente no PyPI
+```powershell
+python -m pip install dimma
+dimma init
+```
 
-Na página **Publishing → Add a new pending publisher**, seleciona **GitHub**
-e preenche exatamente:
+O workflow `.github/workflows/publish-pypi.yml` usa Trusted Publishing (OIDC),
+sem guardar um token PyPI no GitHub, e pode ser usado para versões futuras.
+Não o executes novamente para a versão `1.0.0`; o PyPI não permite substituir
+os ficheiros dessa versão.
+
+### Trusted Publisher configurado
+
+O publisher foi configurado no PyPI e usado com sucesso. Os valores
+configurados foram:
 
 | Campo no PyPI | Valor |
 |---|---|
@@ -149,52 +150,41 @@ e preenche exatamente:
 | Workflow name | `publish-pypi.yml` |
 | Environment name | `pypi` |
 
-O proprietário e o repositório correspondem a
-`https://github.com/diamantino-dimma/dimma-security`. O nome do workflow é
-apenas o nome do ficheiro dentro de `.github/workflows/`, não o título
-apresentado no GitHub Actions.
-
-Antes de submeter o formulário, este workflow tem de estar commitado e enviado
-para a branch `main`. Um publisher pendente permite criar o projeto no primeiro
-upload, mas **não reserva** o nome `dimma`; conclui a configuração e o primeiro
-release sem atrasos desnecessários.
-
-No GitHub, abre **Settings → Environments** no repositório e cria o ambiente
-com o nome exato `pypi`. É o mesmo valor do campo Environment no PyPI.
-Recomendamos ativar aprovação de deployment para o ambiente, se essa opção
-estiver disponível no plano da conta.
+O repositório contém `.github/workflows/publish-pypi.yml` e o ambiente `pypi`
+está criado em **Settings → Environments**. O nome do workflow registado no
+PyPI é o nome do ficheiro dentro de `.github/workflows/`, não o título
+apresentado no GitHub Actions. O upload da versão `1.0.0` confirmou que os
+valores OIDC estão alinhados.
 
 ### Testar e publicar
 
-1. (Opcional, recomendado) Cria uma conta separada no
-   [TestPyPI](https://test.pypi.org/account/register/) e valida primeiro o
-   pacote nesse índice. TestPyPI usa conta e credenciais separadas; para
-   Trusted Publishing de TestPyPI é necessário configurar publisher e workflow
-   também nesse serviço. A versão não pode ser reenviada depois de usada.
-2. Antes do release oficial, executa localmente as verificações da secção 2.
+1. Para um release futuro, escolhe uma versão nova em
+   `dimma-python/pyproject.toml`; não reutilizes `1.0.0`.
+2. Antes do release, executa localmente as verificações da secção 2.
    O workflow repetirá as suites Python, construirá wheel/sdist e executará
    `twine check` antes de solicitar a publicação.
-3. Confirma que a versão em `dimma-python/pyproject.toml` nunca foi publicada
-   no PyPI e que o nome do projeto continua disponível.
-4. Cria uma GitHub Release com uma tag correspondente à versão, por exemplo
-   `dimma-python-v1.0.0`, e publica a release. Isso inicia o workflow
-   `Publish Python package to PyPI`. Para executar manualmente ou repetir uma
-   tentativa falhada, abre **Actions → Publish Python package to PyPI →
-   Run workflow**, escolhe `main` e executa-o uma única vez. O workflow envia
-   os artefactos de `dimma-python/dist/`. A configuração OIDC do PyPI só
-   permite publicar se owner, repositório, workflow e ambiente coincidirem.
+3. Confirma que a versão nova nunca foi publicada no PyPI.
+4. Cria e publica uma GitHub Release com tag correspondente à versão. Isso
+   inicia `Publish Python package to PyPI`. Para uma tentativa falhada, abre
+   **Actions → Publish Python package to PyPI → Run workflow**, escolhe `main`
+   e executa uma única vez, depois de corrigir a causa. O workflow envia os
+   artefactos de `dimma-python/dist/`.
 5. Acompanha **Actions** no GitHub. Se uma tentativa falhar, lê o passo
    vermelho antes de repetir; não faças várias execuções simultâneas. Só
    declares o release concluído quando o
    job tiver terminado com sucesso e a página
    [pypi.org/project/dimma](https://pypi.org/project/dimma/) mostrar a versão.
-6. Testa a instalação num ambiente limpo:
+6. Testa a instalação da nova versão num ambiente limpo:
 
    ```powershell
    py -m venv "$env:TEMP\dimma-release-check"
-   & "$env:TEMP\dimma-release-check\Scripts\python.exe" -m pip install "dimma==1.0.0"
+   & "$env:TEMP\dimma-release-check\Scripts\python.exe" -m pip install "dimma==<NOVA_VERSAO>"
    & "$env:TEMP\dimma-release-check\Scripts\python.exe" -m pip show dimma
    ```
+
+TestPyPI é um índice separado e opcional. Para o utilizar, cria lá uma conta e
+configura um publisher OIDC e workflow que enviem explicitamente para
+TestPyPI; a configuração de produção deste repositório aponta para PyPI.
 
 OIDC evita tokens de publicação de longa duração. Nunca adiciones segredos
 PyPI ao workflow nem ao repositório. Para detalhes oficiais, consulta

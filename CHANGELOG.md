@@ -4,12 +4,24 @@ Este arquivo regista a evolução do projeto a cada sessão de trabalho e indica
 as validações efetivamente executadas; código não testado é identificado como
 tal.
 
+## 2026-10-04 — Primeira publicação no PyPI
+
+- Publicado `dimma==1.0.0` no PyPI usando Trusted Publishing (OIDC) do
+  GitHub Actions, sem token de publicação armazenado no repositório.
+- Workflow repetiu os testes Python, compilação, build de wheel/sdist e
+  `twine check`; todos passaram. Um ambiente virtual limpo instalou a versão
+  pública e confirmou que `dimma --help` funciona.
+- Atualizados README e guia com o comando de instalação PyPI.
+- O pacote npm ainda não foi publicado: o audit encontrou três alertas high
+  transitivos e o hook `prepublishOnly` permanece a bloqueá-lo até uma
+  correção compatível ser testada.
+
 ## 2026-10-04 — Preparação dos pacotes e tema de ícones VS Code
 
-- Adicionados README e LICENSE próprios a cada pacote; o pacote Python agora
-  tem metadados de licença, classificadores e um wheel/sdist que passa
-  `twine check`. O npm limita o tarball a código e documentação, exige Node
-  20+ e executa testes e auditoria de dependências antes de publicar.
+- Adicionados README e LICENSE próprios a cada pacote; o pacote Python tem
+  metadados de licença, URLs e um wheel/sdist que passa `twine check`. O npm
+  limita o tarball a código e documentação, exige Node 20+ e executa testes
+  e auditoria de dependências antes de publicar.
 - Criados `.gitignore`, workflow CI para Node/Python e guia passo a passo de
   validação e publicação em npm, PyPI e nos marketplaces de extensões.
 - Criada uma extensão VS Code que fornece um tema de ícones `.dimma`; também
@@ -22,10 +34,9 @@ tal.
   não tem JDK ou Gradle instalados.
 - Validação local: 106 testes Node e 65 testes Python passaram; npm pack,
   build Python/twine check e empacotamento VSIX foram validados.
-- Publicação ainda não executada: faltam confirmar titular de direitos,
-  publisher/URLs definitivos e contas. `npm audit --omit=dev` continua com
-  três alertas high transitivos, que devem ser resolvidos ou formalmente
-  aceites antes de um release de segurança.
+- Na preparação inicial, ainda faltavam publisher/URLs definitivos e contas;
+  o URL GitHub e a publicação Python foram concluídos depois. `npm audit
+  --omit=dev` continua com três alertas high transitivos.
 
 ## 2026-10-04 — Python: diagnóstico de IA e suite unificada
 

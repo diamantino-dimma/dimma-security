@@ -100,20 +100,18 @@ próprios em [`extensions/vscode/README.md`](./extensions/vscode/README.md), e
 a integração JetBrains em
 [`extensions/jetbrains/README.md`](./extensions/jetbrains/README.md).
 
-## Instalação global (para funcionar em qualquer computador)
+## Instalação global
 
-Depois de publicado nos registries oficiais (npm/PyPI), qualquer programador
-instala e usa sem precisar copiar arquivos manualmente:
+O pacote Python está publicado no PyPI. Instala-o com:
 
 ```bash
-# Node.js
-npm install -g dimma-core
-dimma init          # cria o security.dimma e detecta a stack do projeto
-
-# Python
-pip install dimma
+python -m pip install dimma
 dimma init
 ```
+
+O pacote Node.js ainda não está publicado no npm; a publicação está bloqueada
+por alertas high de dependências e só deve avançar após a correção e nova
+validação. Quando publicado, a instalação será `npm install dimma-core`.
 
 O reconhecimento do `.dimma` não depende do sistema operacional (como um
 `.pdf` associado a um leitor) — ele é lido pela biblioteca dentro do próprio
