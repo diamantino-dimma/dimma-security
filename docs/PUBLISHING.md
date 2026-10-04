@@ -133,31 +133,57 @@ resolvidos e os testes repetidos com sucesso.
 
 ## 4. Publicar no PyPI
 
-1. Crie/verifique uma conta PyPI, ative MFA e crie um token de publicação.
-   Guarde-o fora do repositório.
-2. Gere e valide os artefactos conforme a secção 2.
-3. Publique primeiro em TestPyPI e valide uma instalação limpa:
+1. Crie uma conta separada em [TestPyPI](https://test.pypi.org/account/register/)
+   e confirme o endereço de email. TestPyPI é o ambiente de teste; a conta e
+   os tokens não são os mesmos do PyPI oficial.
+2. Em TestPyPI, abra **Account settings → API tokens** e crie um token para
+   upload. Como o projeto ainda não existe no índice, poderá ser necessário
+   um token com âmbito da conta. Guarde-o num gestor de segredos.
+3. Gere e valide os artefactos conforme a secção 2. A versão precisa estar
+   disponível em TestPyPI; não é possível substituir uma versão já enviada.
+4. Publique primeiro em TestPyPI:
 
    ```powershell
+   Set-Location .\dimma-python
    .\.venv\Scripts\python.exe -m twine upload --repository testpypi dist/*
    ```
 
-4. Depois da validação, configure `TWINE_USERNAME=__token__` e
-   `TWINE_PASSWORD` com o token usando um gestor de segredos ou prompt
-   protegido e envie para PyPI:
+   Quando solicitado, use `__token__` como nome de utilizador e cole o token
+   TestPyPI como senha. Nunca o incluas na linha de comando, num ficheiro
+   versionado ou nesta conversa.
+
+5. Verifique que a versão aparece em
+   [TestPyPI](https://test.pypi.org/project/dimma/) e teste a instalação num
+   ambiente virtual descartável. O índice oficial é usado para dependências:
+
+   ```powershell
+   .\.venv\Scripts\python.exe -m venv "$env:TEMP\dimma-testpypi-venv"
+   & "$env:TEMP\dimma-testpypi-venv\Scripts\python.exe" -m pip install `
+     --index-url https://test.pypi.org/simple/ `
+     --extra-index-url https://pypi.org/simple/ "dimma==1.0.0"
+   & "$env:TEMP\dimma-testpypi-venv\Scripts\python.exe" -m pip show dimma
+   ```
+
+6. Só depois do teste, crie/confirme a conta PyPI oficial em
+   [pypi.org/account/register](https://pypi.org/account/register/), ative MFA,
+   e crie um token separado para o PyPI. Confirme imediatamente antes de
+   enviar que `dimma==1.0.0` continua disponível.
+7. Envie os mesmos artefactos já testados para PyPI oficial; Twine pede as
+   credenciais no terminal:
 
    ```powershell
    .\.venv\Scripts\python.exe -m twine upload dist/*
    ```
 
-5. Verifique a página do projeto e teste a instalação:
+   Usa `__token__` e o token PyPI (não o de TestPyPI) nas solicitações.
+8. Verifique a página do projeto e teste a instalação oficial:
 
    ```powershell
    .\.venv\Scripts\python.exe -m pip install dimma
    ```
 
-Não publique tokens, nem os grave no histórico do PowerShell ou em ficheiros
-versionados.
+Nunca publique tokens, nem os grave no histórico do PowerShell ou em ficheiros
+versionados. Se os tokens ficarem comprometidos, revogue-os imediatamente.
 
 ## 5. Distribuir o ícone no VS Code
 
