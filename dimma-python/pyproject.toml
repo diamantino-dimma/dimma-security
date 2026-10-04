@@ -8,6 +8,7 @@ version = "1.0.0"
 description = "Motor de seguranca ciberetica declarativo baseado em arquivos .dimma"
 readme = "README.md"
 requires-python = ">=3.9"
+authors = [{ name = "DiMMA" }]
 license = "MIT"
 license-files = ["LICENSE"]
 keywords = ["security", "flask", "middleware", "scanner", "cybersecurity"]
@@ -36,6 +37,11 @@ dependencies = [
     "bcrypt>=5.0.0",
     "webauthn>=3.0.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/diamantino-dimma/dimma-security"
+Source = "https://github.com/diamantino-dimma/dimma-security"
+Issues = "https://github.com/diamantino-dimma/dimma-security/issues"
 
 [project.optional-dependencies]
 redis = ["redis>=5.0.0"]

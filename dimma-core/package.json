@@ -2,6 +2,23 @@
   "name": "dimma-core",
   "version": "1.0.0",
   "description": "Motor de seguranca ciberetica declarativo baseado em arquivos .dimma",
+  "author": "DiMMA",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/diamantino-dimma/dimma-security.git"
+  },
+  "homepage": "https://github.com/diamantino-dimma/dimma-security#readme",
+  "bugs": {
+    "url": "https://github.com/diamantino-dimma/dimma-security/issues"
+  },
+  "keywords": [
+    "security",
+    "express",
+    "middleware",
+    "csrf",
+    "rate-limit",
+    "dimma"
+  ],
   "files": [
     "src/",
     "README.md",

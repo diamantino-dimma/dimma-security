@@ -27,7 +27,7 @@ app.get('/health', (_req, res) => res.json({ ok: true }));
 ```
 
 For CLI setup and configuration, see the
-project README in the source repository.
+[project README](https://github.com/diamantino-dimma/dimma-security#readme).
 
 `dimma scan` is a heuristic static scanner, not an active DAST/pentest
 scanner or a security certification.

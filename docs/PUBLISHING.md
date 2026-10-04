@@ -15,24 +15,19 @@ Verificação em 2026-10-04: as APIs públicas do npm e PyPI responderam 404 par
 `dimma-core` e `dimma`. Confirme novamente disponibilidade e conta/registry
 imediatamente antes do primeiro envio.
 
-## Estado e bloqueios antes do primeiro lançamento
+## Estado e bloqueios antes de publicar npm/PyPI
 
-Não publique ainda. Para liberar o lançamento, feche estes pontos:
+Os metadados locais já apontam para o repositório público e identificam
+`DiMMA` como autor/titular. Ainda não publique até fechar estes pontos:
 
-- [ ] **Direitos e licença:** substitua `[COPYRIGHT HOLDER]` nos quatro
-  ficheiros `LICENSE` por quem detém os direitos e confirme que pode publicar
-  o código, o nome e o logótipo.
-- [ ] **Identidade pública:** confirme o URL público do repositório/projeto e
-  inclua-o nos metadados npm, PyPI e das extensões. O pacote npm também precisa
-  de um campo `repository`; o projeto Python deve declarar `project.urls`.
-- [ ] **Publishers:** substitua `your-publisher-id` pelo ID real do
-  Visual Studio Marketplace e confirme um publisher com o mesmo ID no Open
-  VSX para Cursor. Confirme ainda que `com.dimma.fileicons` pode ser usado no
-  JetBrains Marketplace.
-- [ ] **Versões:** confirme que `1.0.0` nunca foi publicada para cada nome/
-  publisher. Se algum envio anterior já consumiu essa versão, incremente-a
-  antes de reconstruir os artefactos; registries normalmente não permitem
-  sobrescrever uma versão publicada.
+- [x] **Titular/licença:** a pedido do titular, os avisos de copyright dos
+  pacotes Node/Python já identificam `DiMMA`. Confirme que o titular autoriza
+  a distribuição pública sob MIT, incluindo nome e logótipo.
+- [x] **Identidade pública:** o URL `https://github.com/diamantino-dimma/dimma-security`
+  foi adicionado aos metadados npm/PyPI e aos READMEs dos pacotes.
+- [x] **Disponibilidade observada:** em 2026-10-04, npm e PyPI responderam
+  404 para `dimma-core` e `dimma`. Confirme de novo imediatamente antes de
+  enviar e garanta que a versão `1.0.0` continua disponível.
 - [ ] **Auditoria npm:** a verificação executada em 2026-10-04 reportou três
   alertas high transitivos (`http-proxy-middleware` → `micromatch` → `braces`).
   O hook `prepublishOnly` bloqueia `npm publish` enquanto o audit reportar
@@ -53,7 +48,8 @@ Não publique ainda. Para liberar o lançamento, feche estes pontos:
 
 Os nomes do npm/PyPI responderem 404 não valida licença, metadados, testes,
 publisher nem direito de publicação: é apenas uma consulta de disponibilidade
-naquele momento.
+naquele momento. A publicação da extensão VS Code/Cursor ou do plugin
+JetBrains é um lançamento separado e fica fora do objetivo atual.
 
 ## 1. Antes de criar uma versão
 
@@ -132,6 +128,8 @@ documentar formalmente a aceitação do risco.
    ```
 
 Nunca coloque um token npm no repositório nem o inclua na linha de comando.
+O lançamento permanece bloqueado pelo audit até os alertas high serem
+resolvidos e os testes repetidos com sucesso.
 
 ## 4. Publicar no PyPI
 

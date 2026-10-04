@@ -26,7 +26,7 @@ dimma.protect(app)
 
 Create a configuration with `dimma init`. For CLI commands, configuration
 options, security boundaries, and Node.js usage, see the project README in
-the source repository.
+the [public GitHub repository](https://github.com/diamantino-dimma/dimma-security#readme).
 
 `dimma scan` performs heuristic static checks; it is not an active
 DAST/pentest scanner or a security certification.
